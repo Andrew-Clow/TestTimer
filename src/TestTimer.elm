@@ -468,13 +468,9 @@ deleteButton index _ =
     LookAndFeel.clickHoverColour LookAndFeel.pale.red LookAndFeel.icons.cross <| DeleteTest index
 
 
-buttonHelper : { r | tests : undoList } -> (undoList -> Bool) -> Msg -> Element Msg -> Element Msg -> Element Msg
-buttonHelper model decide msg button1 button2 =
-    if decide model.tests then
-        LookAndFeel.clickHoverColour LookAndFeel.pale.green button1 msg
-
-    else
-        button2
+hoverGreen : msg -> Element msg -> Element msg
+hoverGreen msg button =
+    LookAndFeel.clickHoverColour LookAndFeel.pale.green button msg
 
 
 viewTestBeingAdded : Model -> Maybe NewTestUnderEditing -> Element Msg
@@ -483,8 +479,16 @@ viewTestBeingAdded model mn =
         Nothing ->
             Element.row [ LookAndFeel.spacing.large ] <|
                 [ LookAndFeel.clickHoverColour LookAndFeel.pale.green LookAndFeel.icons.addLarge StartMakingNewTest
-                , buttonHelper model UndoList.hasPast Undo LookAndFeel.icons.undoLargeBlue LookAndFeel.icons.undoLargeGrey
-                , buttonHelper model UndoList.hasFuture Redo LookAndFeel.icons.redoLargeBlue LookAndFeel.icons.redoLargeGrey
+                , if UndoList.hasPast model.tests then
+                    hoverGreen Undo LookAndFeel.icons.undoLargeBlue
+
+                  else
+                    LookAndFeel.icons.undoLargeGrey
+                , if UndoList.hasFuture model.tests then
+                    hoverGreen Redo LookAndFeel.icons.redoLargeBlue
+
+                  else
+                    LookAndFeel.icons.redoLargeGrey
                 ]
 
         Just newTest ->
