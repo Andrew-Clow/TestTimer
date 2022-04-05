@@ -11,6 +11,7 @@ import Task
 import Time
 import Time.Extra
 import TimeUtils
+import UndoList exposing (UndoList)
 
 
 main =
@@ -31,6 +32,8 @@ type Msg
     | SetTimeZone Time.Zone
     | InitialiseTime Time.Posix
     | StartMakingNewTest
+    | Undo
+    | Redo
     | DuplicateTest Test
     | NewTest TestEditing
     | DeleteTest Int
@@ -43,6 +46,7 @@ type TestEditing
     | EditedLength (Maybe Int)
     | ToggleExtraTime Bool
     | SaveTest (List Test)
+    | CancelNewTest
 
 
 
@@ -52,7 +56,7 @@ type TestEditing
 type alias Model =
     { timeZone : Time.Zone
     , currentTime : Time.Posix
-    , tests : List Test
+    , tests : UndoList (List Test)
     , newTest : Maybe NewTestUnderEditing
     }
 
@@ -216,7 +220,7 @@ init _ =
         model =
             { timeZone = Time.utc
             , currentTime = Time.millisToPosix 0
-            , tests = []
+            , tests = UndoList.fresh []
             , newTest = Nothing
             }
     in
@@ -232,16 +236,18 @@ init _ =
 -- update --------------------------------------------------------------------------------------------------------------
 
 
+updateTests : Model -> (List Test -> List Test) -> Model
+updateTests model f =
+    { model | tests = UndoList.new (f model.tests.present) model.tests }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         newModel =
             case msg of
                 Tick posix ->
-                    { model
-                        | currentTime = posix
-                        , tests = List.map (updateStatus model) model.tests
-                    }
+                    { model | currentTime = posix, tests = UndoList.mapPresent (List.map <| updateStatus model) model.tests }
 
                 SetTimeZone zone ->
                     { model | timeZone = zone }
@@ -269,7 +275,13 @@ update msg model =
                             model
 
                 DeleteTest index ->
-                    { model | tests = deleteAt index model.tests }
+                    updateTests model (deleteAt index)
+
+                Undo ->
+                    { model | tests = model.tests |> UndoList.undo }
+
+                Redo ->
+                    { model | tests = model.tests |> UndoList.redo }
     in
     ( newModel, Cmd.none )
 
@@ -327,7 +339,11 @@ asNewTestIn m t =
 
 incorporateTestsAndCancelNewTest : List Test -> Model -> Model
 incorporateTestsAndCancelNewTest newTests model =
-    { model | tests = sortTests <| model.tests ++ newTests, newTest = Nothing }
+    updateTests { model | newTest = Nothing } ((++) newTests >> sortTests)
+
+
+
+--{ model | tests = sortTests <| model.tests ++ newTests, newTest = Nothing }
 
 
 updateNewTest : TestEditing -> Model -> Model
@@ -356,6 +372,9 @@ updateNewTest msg model =
                 SaveTest newTests ->
                     incorporateTestsAndCancelNewTest newTests model
 
+                CancelNewTest ->
+                    { model | newTest = Nothing }
+
 
 
 -- Time ----------------------------------------------------------------------------------------------------------------
@@ -382,7 +401,7 @@ view model =
             [ Element.row [ LookAndFeel.fontSize.enormous ]
                 [ Element.text <| TimeUtils.showTimeWithSeconds model.timeZone model.currentTime
                 ]
-            , viewTests model model.tests
+            , viewTests model <| model.tests.present
             , viewTestBeingAdded model model.newTest
             ]
 
@@ -449,11 +468,24 @@ deleteButton index _ =
     LookAndFeel.clickHoverColour LookAndFeel.pale.red LookAndFeel.icons.cross <| DeleteTest index
 
 
-viewTestBeingAdded : TimeData r -> Maybe NewTestUnderEditing -> Element Msg
-viewTestBeingAdded timeData mn =
+buttonHelper : { r | tests : undoList } -> (undoList -> Bool) -> Msg -> Element Msg -> Element Msg -> Element Msg
+buttonHelper model decide msg button1 button2 =
+    if decide model.tests then
+        LookAndFeel.clickHoverColour LookAndFeel.pale.green button1 msg
+
+    else
+        button2
+
+
+viewTestBeingAdded : Model -> Maybe NewTestUnderEditing -> Element Msg
+viewTestBeingAdded model mn =
     case mn of
         Nothing ->
-            LookAndFeel.clickHoverColour LookAndFeel.pale.green LookAndFeel.icons.addLarge StartMakingNewTest
+            Element.row [ LookAndFeel.spacing.large ] <|
+                [ LookAndFeel.clickHoverColour LookAndFeel.pale.green LookAndFeel.icons.addLarge StartMakingNewTest
+                , buttonHelper model UndoList.hasPast Undo LookAndFeel.icons.undoLargeBlue LookAndFeel.icons.undoLargeGrey
+                , buttonHelper model UndoList.hasFuture Redo LookAndFeel.icons.redoLargeBlue LookAndFeel.icons.redoLargeGrey
+                ]
 
         Just newTest ->
             Element.column
@@ -480,9 +512,16 @@ viewTestBeingAdded timeData mn =
                     , checked = newTest.addExtraTimeToo
                     , label = Element.Input.labelLeft [] <| Element.text "Add a version with extra time?"
                     }
-                , LookAndFeel.autoButton
-                    { autoButtonColors = LookAndFeel.autoButtonColors.blue
-                    , onPress = Maybe.map (NewTest << SaveTest) <| makeTests timeData newTest
-                    , label = Element.text "Save"
-                    }
+                , Element.row [ LookAndFeel.spacing.normal ]
+                    [ LookAndFeel.autoButton
+                        { autoButtonColors = LookAndFeel.autoButtonColors.blue
+                        , onPress = Maybe.map (NewTest << SaveTest) <| makeTests model newTest
+                        , label = Element.text "Save"
+                        }
+                    , LookAndFeel.autoButton
+                        { autoButtonColors = LookAndFeel.autoButtonColors.blue
+                        , onPress = Just <| NewTest CancelNewTest
+                        , label = Element.text "Cancel"
+                        }
+                    ]
                 ]
