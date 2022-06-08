@@ -1,7 +1,6 @@
 module TestTimer exposing (..)
 
--- TODO: elm/time was right. I should only store posix in my model. Maybe fix that.
-
+import AnalogClock exposing (view)
 import Browser
 import Element exposing (Element)
 import Element.Input
@@ -312,13 +311,13 @@ showStatus : TestStatus -> Element msg
 showStatus ts =
     case ts of
         NotStarted ->
-            LookAndFeel.icons.pauseGrey
+            LookAndFeel.icons.pauseGreyLarge
 
         InProgress ->
-            LookAndFeel.icons.playGreen
+            LookAndFeel.icons.playGreenLarge
 
         Completed ->
-            LookAndFeel.icons.stopRed
+            LookAndFeel.icons.stopRedLarge
 
 
 updateStatus : TimeData r -> Test -> Test
@@ -393,16 +392,24 @@ view : Model -> Html Msg
 view model =
     Element.layout
         [ LookAndFeel.padding.large
+        , Element.width Element.fill
         ]
     <|
         Element.column
             [ LookAndFeel.spacing.large
             ]
-            [ Element.row [ LookAndFeel.fontSize.enormous ]
-                [ Element.text <| TimeUtils.showTimeWithSeconds model.timeZone model.currentTime
+            [ Element.row [ Element.width <| Element.px 1100 ]
+                [ Element.el [ LookAndFeel.fontSize.enormous, Element.centerX ] <|
+                    Element.text <|
+                        TimeUtils.showTimeWithSeconds model.timeZone model.currentTime
                 ]
-            , viewTests model <| model.tests.present
-            , viewTestBeingAdded model model.newTest
+            , Element.row [ Element.width Element.fill ]
+                [ AnalogClock.view model
+                , Element.column [ LookAndFeel.spacing.large ]
+                    [ viewTests model <| model.tests.present
+                    , viewTestBeingAdded model model.newTest
+                    ]
+                ]
             ]
 
 
@@ -473,6 +480,16 @@ hoverGreen msg button =
     LookAndFeel.clickHoverColour LookAndFeel.pale.green button msg
 
 
+twoDigitWidth : Element.Attribute msg
+twoDigitWidth =
+    Element.width <| Element.px 50
+
+
+threeDigitWidth : Element.Attribute msg
+threeDigitWidth =
+    Element.width <| Element.px 75
+
+
 viewTestBeingAdded : Model -> Maybe NewTestUnderEditing -> Element Msg
 viewTestBeingAdded model mn =
     case mn of
@@ -494,7 +511,7 @@ viewTestBeingAdded model mn =
         Just newTest ->
             Element.column
                 [ LookAndFeel.spacing.normal ]
-                [ Element.Input.text []
+                [ Element.Input.text [ Element.width <| Element.px 300 ]
                     { onChange = NewTest << TypedName
                     , text = newTest.name
                     , placeholder = LookAndFeel.placeholderText "Type a name for the test"
@@ -502,13 +519,16 @@ viewTestBeingAdded model mn =
                     }
                 , Element.row []
                     [ Element.text "Start time: "
-                    , Element.map (NewTest << EditedStartHours) <| TimeUtils.inputPositiveIntegerBelow 24 [] newTest.startHours
+                    , Element.map (NewTest << EditedStartHours) <|
+                        TimeUtils.inputPositiveIntegerBelow 24 [ twoDigitWidth ] newTest.startHours
                     , Element.text " : "
-                    , Element.map (NewTest << EditedStartMinutes) <| TimeUtils.inputPositiveIntegerBelow 60 [] newTest.startMinutes
+                    , Element.map (NewTest << EditedStartMinutes) <|
+                        TimeUtils.inputPositiveIntegerBelow 60 [ twoDigitWidth ] newTest.startMinutes
                     ]
                 , Element.row []
                     [ Element.text "Length: "
-                    , Element.map (NewTest << EditedLength) <| TimeUtils.inputPositiveIntegerBelow (24 * 60) [] newTest.length
+                    , Element.map (NewTest << EditedLength) <|
+                        TimeUtils.inputPositiveIntegerBelow (24 * 60) [ threeDigitWidth ] newTest.length
                     ]
                 , Element.Input.checkbox []
                     { onChange = NewTest << ToggleExtraTime

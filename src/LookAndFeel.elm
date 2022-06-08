@@ -125,7 +125,7 @@ fontSize =
     { normal = Font.size 10
     , large = Font.size 16
     , huge = Font.size 24
-    , enormous = Font.size 240
+    , enormous = Font.size 200
     }
 
 
@@ -309,6 +309,9 @@ icons =
     , playGreen = iconElement Material.Icons.Av.play_circle_filled iconSize.normal Color.green
     , pauseGrey = iconElement Material.Icons.Av.pause_circle_filled iconSize.normal Color.grey
     , stopRed = iconElement Material.Icons.Av.stop iconSize.normal Color.darkRed
+    , playGreenLarge = iconElement Material.Icons.Av.play_circle_filled iconSize.large Color.green
+    , pauseGreyLarge = iconElement Material.Icons.Av.pause_circle_filled iconSize.large Color.grey
+    , stopRedLarge = iconElement Material.Icons.Av.stop iconSize.large Color.darkRed
     }
 
 
