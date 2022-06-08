@@ -9,6 +9,7 @@
 module AnalogClock exposing (view)
 
 import Element
+import Element.Font
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -167,6 +168,7 @@ drawNumber hour =
         , textAnchor "middle"
         , x <| String.fromInt point.x
         , y <| String.fromInt point.y
+        , fontSize "30"
         ]
         [ Svg.text <| String.fromInt hour ]
 
