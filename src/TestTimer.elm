@@ -2,10 +2,12 @@ module TestTimer exposing (..)
 
 import AnalogClock exposing (view)
 import Browser
+import Button exposing (Content(..))
+import Colour
 import Element exposing (Element)
 import Element.Input
 import Html exposing (Html)
-import LookAndFeel
+import Size
 import Task
 import Time
 import Time.Extra
@@ -30,12 +32,12 @@ type Msg
     = Tick Time.Posix
     | SetTimeZone Time.Zone
     | InitialiseTime Time.Posix
-    | StartMakingNewTest
-    | Undo
-    | Redo
-    | DuplicateTest Test
     | NewTest TestEditing
+    | CopyTest Test
+    | UndoLast
+    | RedoLast
     | DeleteTest Int
+    | AddTest
 
 
 type TestEditing
@@ -257,7 +259,7 @@ update msg model =
                 NewTest newTestMsg ->
                     updateNewTest newTestMsg model
 
-                StartMakingNewTest ->
+                AddTest ->
                     case model.newTest of
                         Nothing ->
                             { model | newTest = Just (defaultTest model) }
@@ -265,7 +267,7 @@ update msg model =
                         Just _ ->
                             model
 
-                DuplicateTest test ->
+                CopyTest test ->
                     case model.newTest of
                         Nothing ->
                             { model | newTest = Just (duplicateTest model test) }
@@ -276,10 +278,10 @@ update msg model =
                 DeleteTest index ->
                     updateTests model (deleteAt index)
 
-                Undo ->
+                UndoLast ->
                     { model | tests = model.tests |> UndoList.undo }
 
-                Redo ->
+                RedoLast ->
                     { model | tests = model.tests |> UndoList.redo }
     in
     ( newModel, Cmd.none )
@@ -311,13 +313,13 @@ showStatus : TestStatus -> Element msg
 showStatus ts =
     case ts of
         NotStarted ->
-            LookAndFeel.icons.pauseGreyLarge
+            button Pause (Info Grey) Nothing
 
         InProgress ->
-            LookAndFeel.icons.playGreenLarge
+            button Go (Info Green) Nothing
 
         Completed ->
-            LookAndFeel.icons.stopRedLarge
+            button Stop (Info Red) Nothing
 
 
 updateStatus : TimeData r -> Test -> Test
@@ -391,21 +393,21 @@ subscriptions _ =
 view : Model -> Html Msg
 view model =
     Element.layout
-        [ LookAndFeel.padding.large
+        [ Size.padding.large
         , Element.width Element.fill
         ]
     <|
         Element.column
-            [ LookAndFeel.spacing.large
+            [ Size.spacing.large
             ]
             [ Element.row [ Element.width <| Element.px 1100 ]
-                [ Element.el [ LookAndFeel.fontSize.enormous, Element.centerX ] <|
+                [ Element.el [ Size.fontSize.enormous, Element.centerX ] <|
                     Element.text <|
                         TimeUtils.showTimeWithSeconds model.timeZone model.currentTime
                 ]
             , Element.row [ Element.width Element.fill ]
                 [ AnalogClock.view model
-                , Element.column [ LookAndFeel.spacing.large ]
+                , Element.column [ Size.spacing.large ]
                     [ viewTests model <| model.tests.present
                     , viewTestBeingAdded model model.newTest
                     ]
@@ -416,8 +418,8 @@ view model =
 viewTests : { r | timeZone : Time.Zone, newTest : Maybe NewTestUnderEditing, currentTime : Time.Posix } -> List Test -> Element Msg
 viewTests model tests =
     Element.indexedTable
-        [ LookAndFeel.spacing.large
-        , LookAndFeel.fontSize.huge
+        [ Size.spacing.large
+        , Size.fontSize.huge
         ]
         { data = tests
         , columns =
@@ -429,19 +431,25 @@ viewTests model tests =
               , width = Element.shrink
               , view =
                     \_ test ->
-                        Element.text test.name
+                        Element.el [ Element.centerY ] <|
+                            Element.text test.name
               }
             , { header = Element.text "Start"
               , width = Element.shrink
               , view =
                     \_ test ->
-                        Element.text <| TimeUtils.showTimeWithoutSeconds model.timeZone test.startTime
+                        Element.el [ Element.centerY ] <|
+                            Element.text <|
+                                TimeUtils.showTimeWithoutSeconds model.timeZone test.startTime
               }
             , { header = Element.text "Finish"
               , width = Element.shrink
               , view =
                     \_ test ->
-                        Element.text <| TimeUtils.showTimeWithoutSeconds model.timeZone <| finishTime test
+                        Element.el [ Element.centerY ] <|
+                            Element.text <|
+                                TimeUtils.showTimeWithoutSeconds model.timeZone <|
+                                    finishTime test
               }
             , { header = Element.none
               , width = Element.shrink
@@ -467,17 +475,12 @@ ifNotCurrentlyEditing model viewTest index test =
 
 duplicateButton : Int -> Test -> Element Msg
 duplicateButton _ existingTest =
-    LookAndFeel.clickHoverColour LookAndFeel.pale.green LookAndFeel.icons.copyNormal <| DuplicateTest existingTest
+    button Copy Small (Just <| CopyTest existingTest)
 
 
 deleteButton : Int -> Test -> Element Msg
 deleteButton index _ =
-    LookAndFeel.clickHoverColour LookAndFeel.pale.red LookAndFeel.icons.cross <| DeleteTest index
-
-
-hoverGreen : msg -> Element msg -> Element msg
-hoverGreen msg button =
-    LookAndFeel.clickHoverColour LookAndFeel.pale.green button msg
+    button Delete SmallRed (Just <| DeleteTest index)
 
 
 twoDigitWidth : Element.Attribute msg
@@ -490,31 +493,32 @@ threeDigitWidth =
     Element.width <| Element.px 75
 
 
+ifTrueJust : a -> Bool -> Maybe a
+ifTrueJust a true =
+    if true then
+        Just a
+
+    else
+        Nothing
+
+
 viewTestBeingAdded : Model -> Maybe NewTestUnderEditing -> Element Msg
 viewTestBeingAdded model mn =
     case mn of
         Nothing ->
-            Element.row [ LookAndFeel.spacing.large ] <|
-                [ LookAndFeel.clickHoverColour LookAndFeel.pale.green LookAndFeel.icons.addLarge StartMakingNewTest
-                , if UndoList.hasPast model.tests then
-                    hoverGreen Undo LookAndFeel.icons.undoLargeBlue
-
-                  else
-                    LookAndFeel.icons.undoLargeGrey
-                , if UndoList.hasFuture model.tests then
-                    hoverGreen Redo LookAndFeel.icons.redoLargeBlue
-
-                  else
-                    LookAndFeel.icons.redoLargeGrey
+            Element.row [ Size.spacing.large ] <|
+                [ button Add Large (Just AddTest)
+                , button Undo Large (UndoList.hasPast model.tests |> ifTrueJust UndoLast)
+                , button Redo Large (UndoList.hasFuture model.tests |> ifTrueJust RedoLast)
                 ]
 
         Just newTest ->
             Element.column
-                [ LookAndFeel.spacing.normal ]
+                [ Size.spacing.normal ]
                 [ Element.Input.text [ Element.width <| Element.px 300 ]
                     { onChange = NewTest << TypedName
                     , text = newTest.name
-                    , placeholder = LookAndFeel.placeholderText "Type a name for the test"
+                    , placeholder = Size.placeholderText "Type a name for the test"
                     , label = Element.Input.labelLeft [] <| Element.text "Test name: "
                     }
                 , Element.row []
@@ -536,16 +540,127 @@ viewTestBeingAdded model mn =
                     , checked = newTest.addExtraTimeToo
                     , label = Element.Input.labelLeft [] <| Element.text "Add a version with extra time?"
                     }
-                , Element.row [ LookAndFeel.spacing.normal ]
-                    [ LookAndFeel.autoButton
-                        { autoButtonColors = LookAndFeel.autoButtonColors.blue
-                        , onPress = Maybe.map (NewTest << SaveTest) <| makeTests model newTest
-                        , label = Element.text "Save"
-                        }
-                    , LookAndFeel.autoButton
-                        { autoButtonColors = LookAndFeel.autoButtonColors.blue
-                        , onPress = Just <| NewTest CancelNewTest
-                        , label = Element.text "Cancel"
-                        }
+                , Element.row [ Size.spacing.normal ]
+                    [ button Save Text <| Maybe.map (NewTest << SaveTest) <| makeTests model newTest
+                    , button Cancel Text <| Just <| NewTest CancelNewTest
                     ]
                 ]
+
+
+
+-- Buttons -------------------------------------------------------------------------------------------------------------
+
+
+type ButtonStyle
+    = Large
+    | Small
+    | SmallRed
+    | Text
+    | Info Colour
+
+
+type Colour
+    = Grey
+    | Red
+    | Green
+
+
+defaultButtonStyle : Button.Style
+defaultButtonStyle =
+    { enabled = Colour.natural.paleBlue
+    , disabled = Colour.natural.veryLightGrey
+    , borderRounding = 10
+    , mouseOver = Just Colour.natural.appleWhite
+    , size = Size.button.large
+    }
+
+
+getButtonStyle : ButtonStyle -> Button.Style
+getButtonStyle i =
+    case i of
+        Large ->
+            defaultButtonStyle
+
+        Small ->
+            { defaultButtonStyle
+                | size = Size.button.normal
+            }
+
+        SmallRed ->
+            { defaultButtonStyle
+                | size = Size.button.normal
+                , mouseOver = Just Colour.natural.pink
+            }
+
+        Text ->
+            { defaultButtonStyle
+                | size = Size.generousFont.normal
+                , mouseOver = Just Colour.natural.blue
+            }
+
+        Info colour ->
+            { defaultButtonStyle
+                | mouseOver = Nothing
+                , disabled =
+                    case colour of
+                        Red ->
+                            Colour.natural.red
+
+                        Grey ->
+                            Colour.natural.midGrey
+
+                        Green ->
+                            Colour.natural.green
+            }
+
+
+type Button
+    = Undo
+    | Redo
+    | Add
+    | Copy
+    | Delete
+    | Save
+    | Cancel
+    | Pause
+    | Stop
+    | Go
+
+
+content : Button -> Button.Content msg
+content btn =
+    case btn of
+        Undo ->
+            Button.icon.undo
+
+        Redo ->
+            Button.icon.redo
+
+        Add ->
+            Button.icon.add
+
+        Copy ->
+            Button.icon.copy
+
+        Delete ->
+            Button.icon.cross
+
+        Save ->
+            Button.Text "Save"
+
+        Cancel ->
+            Button.Text "Cancel"
+
+        Pause ->
+            Button.icon.pause
+
+        Stop ->
+            Button.icon.stop
+
+        Go ->
+            Button.icon.play
+
+
+button : Button -> ButtonStyle -> Maybe msg -> Element msg
+button =
+    Button.makeButton getButtonStyle content

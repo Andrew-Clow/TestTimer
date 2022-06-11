@@ -6208,7 +6208,7 @@ var $author$project$TestTimer$update = F2(
 				case 'NewTest':
 					var newTestMsg = msg.a;
 					return A2($author$project$TestTimer$updateNewTest, newTestMsg, model);
-				case 'StartMakingNewTest':
+				case 'AddTest':
 					var _v1 = model.newTest;
 					if (_v1.$ === 'Nothing') {
 						return _Utils_update(
@@ -6220,7 +6220,7 @@ var $author$project$TestTimer$update = F2(
 					} else {
 						return model;
 					}
-				case 'DuplicateTest':
+				case 'CopyTest':
 					var test = msg.a;
 					var _v2 = model.newTest;
 					if (_v2.$ === 'Nothing') {
@@ -6239,7 +6239,7 @@ var $author$project$TestTimer$update = F2(
 						$author$project$TestTimer$updateTests,
 						model,
 						$author$project$TestTimer$deleteAt(index));
-				case 'Undo':
+				case 'UndoLast':
 					return _Utils_update(
 						model,
 						{
@@ -11800,7 +11800,7 @@ var $mdgriffith$elm_ui$Element$Font$size = function (i) {
 		$mdgriffith$elm_ui$Internal$Flag$fontSize,
 		$mdgriffith$elm_ui$Internal$Model$FontSize(i));
 };
-var $author$project$LookAndFeel$fontSize = {
+var $author$project$Size$fontSize = {
 	enormous: $mdgriffith$elm_ui$Element$Font$size(200),
 	huge: $mdgriffith$elm_ui$Element$Font$size(24),
 	large: $mdgriffith$elm_ui$Element$Font$size(16),
@@ -12093,7 +12093,7 @@ var $mdgriffith$elm_ui$Element$padding = function (x) {
 			f,
 			f));
 };
-var $author$project$LookAndFeel$padding = {
+var $author$project$Size$padding = {
 	large: $mdgriffith$elm_ui$Element$padding(30),
 	normal: $mdgriffith$elm_ui$Element$padding(12),
 	small: $mdgriffith$elm_ui$Element$padding(6)
@@ -12162,7 +12162,7 @@ var $mdgriffith$elm_ui$Element$spacing = function (x) {
 			x,
 			x));
 };
-var $author$project$LookAndFeel$spacing = {
+var $author$project$Size$spacing = {
 	large: $mdgriffith$elm_ui$Element$spacing(30),
 	normal: $mdgriffith$elm_ui$Element$spacing(6),
 	small: $mdgriffith$elm_ui$Element$spacing(2)
@@ -12377,6 +12377,9 @@ var $author$project$AnalogClock$view = function (model) {
 					]));
 		}());
 };
+var $author$project$TestTimer$Add = {$: 'Add'};
+var $author$project$TestTimer$AddTest = {$: 'AddTest'};
+var $author$project$TestTimer$Cancel = {$: 'Cancel'};
 var $author$project$TestTimer$CancelNewTest = {$: 'CancelNewTest'};
 var $author$project$TestTimer$EditedLength = function (a) {
 	return {$: 'EditedLength', a: a};
@@ -12387,14 +12390,17 @@ var $author$project$TestTimer$EditedStartHours = function (a) {
 var $author$project$TestTimer$EditedStartMinutes = function (a) {
 	return {$: 'EditedStartMinutes', a: a};
 };
+var $author$project$TestTimer$Large = {$: 'Large'};
 var $author$project$TestTimer$NewTest = function (a) {
 	return {$: 'NewTest', a: a};
 };
 var $author$project$TestTimer$Redo = {$: 'Redo'};
+var $author$project$TestTimer$RedoLast = {$: 'RedoLast'};
+var $author$project$TestTimer$Save = {$: 'Save'};
 var $author$project$TestTimer$SaveTest = function (a) {
 	return {$: 'SaveTest', a: a};
 };
-var $author$project$TestTimer$StartMakingNewTest = {$: 'StartMakingNewTest'};
+var $author$project$TestTimer$Text = {$: 'Text'};
 var $author$project$TestTimer$ToggleExtraTime = function (a) {
 	return {$: 'ToggleExtraTime', a: a};
 };
@@ -12402,21 +12408,464 @@ var $author$project$TestTimer$TypedName = function (a) {
 	return {$: 'TypedName', a: a};
 };
 var $author$project$TestTimer$Undo = {$: 'Undo'};
-var $mdgriffith$elm_ui$Internal$Flag$borderRound = $mdgriffith$elm_ui$Internal$Flag$flag(17);
-var $mdgriffith$elm_ui$Element$Border$rounded = function (radius) {
-	return A2(
-		$mdgriffith$elm_ui$Internal$Model$StyleClass,
-		$mdgriffith$elm_ui$Internal$Flag$borderRound,
-		A3(
-			$mdgriffith$elm_ui$Internal$Model$Single,
-			'br-' + $elm$core$String$fromInt(radius),
-			'border-radius',
-			$elm$core$String$fromInt(radius) + 'px'));
+var $author$project$TestTimer$UndoLast = {$: 'UndoLast'};
+var $author$project$Button$Text = function (a) {
+	return {$: 'Text', a: a};
 };
-var $author$project$LookAndFeel$borderRounded = {
-	large: $mdgriffith$elm_ui$Element$Border$rounded(9),
-	normal: $mdgriffith$elm_ui$Element$Border$rounded(6),
-	small: $mdgriffith$elm_ui$Element$Border$rounded(3)
+var $elm$svg$Svg$Attributes$d = _VirtualDom_attribute('d');
+var $avh4$elm_color$Color$toRgba = function (_v0) {
+	var r = _v0.a;
+	var g = _v0.b;
+	var b = _v0.c;
+	var a = _v0.d;
+	return {alpha: a, blue: b, green: g, red: r};
+};
+var $danmarcab$material_icons$Material$Icons$Internal$toRgbaString = function (color) {
+	var _v0 = $avh4$elm_color$Color$toRgba(color);
+	var red = _v0.red;
+	var green = _v0.green;
+	var blue = _v0.blue;
+	var alpha = _v0.alpha;
+	return 'rgba(' + ($elm$core$String$fromInt(
+		$elm$core$Basics$round(255 * red)) + (',' + ($elm$core$String$fromInt(
+		$elm$core$Basics$round(255 * green)) + (',' + ($elm$core$String$fromInt(
+		$elm$core$Basics$round(255 * blue)) + (',' + ($elm$core$String$fromFloat(alpha) + ')')))))));
+};
+var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
+var $danmarcab$material_icons$Material$Icons$Internal$icon = F4(
+	function (viewBox, children, color, size) {
+		var stringSize = $elm$core$String$fromInt(size);
+		var stringColor = $danmarcab$material_icons$Material$Icons$Internal$toRgbaString(color);
+		return A2(
+			$elm$svg$Svg$svg,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$width(stringSize),
+					$elm$svg$Svg$Attributes$height(stringSize),
+					$elm$svg$Svg$Attributes$viewBox(viewBox)
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$svg$Svg$g,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$fill(stringColor)
+						]),
+					children)
+				]));
+	});
+var $elm$svg$Svg$path = $elm$svg$Svg$trustedNode('path');
+var $danmarcab$material_icons$Material$Icons$Content$add_circle = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm10 22h-8v8h-4v-8h-8v-4h8v-8h4v8h8v4z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Navigation$arrow_downward = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M40 24l-2.82-2.82L26 32.34V8h-4v24.34L10.84 21.16 8 24l16 16 16-16z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Navigation$arrow_upward = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M8 24l2.83 2.83L22 15.66V40h4V15.66l11.17 11.17L40 24 24 8 8 24z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Navigation$cancel = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm10 27.17L31.17 34 24 26.83 16.83 34 14 31.17 21.17 24 14 16.83 16.83 14 24 21.17 31.17 14 34 16.83 26.83 24 34 31.17z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Navigation$check = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M18 32.34L9.66 24l-2.83 2.83L18 38l24-24-2.83-2.83z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Content$clear = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M38 12.83L35.17 10 24 21.17 12.83 10 10 12.83 21.17 24 10 35.17 12.83 38 24 26.83 35.17 38 38 35.17 26.83 24z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Content$content_copy = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M32 2H8C5.79 2 4 3.79 4 6v28h4V6h24V2zm6 8H16c-2.21 0-4 1.79-4 4v28c0 2.21 1.79 4 4 4h22c2.21 0 4-1.79 4-4V14c0-2.21-1.79-4-4-4zm0 32H16V14h22v28z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Content$create = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M6 34.5V42h7.5l22.13-22.13-7.5-7.5L6 34.5zm35.41-20.41c.78-.78.78-2.05 0-2.83l-4.67-4.67c-.78-.78-2.05-.78-2.83 0l-3.66 3.66 7.5 7.5 3.66-3.66z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$File$folder_open = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M40 12H24l-4-4H8c-2.21 0-3.98 1.79-3.98 4L4 36c0 2.21 1.79 4 4 4h32c2.21 0 4-1.79 4-4V16c0-2.21-1.79-4-4-4zm0 24H8V16h32v20z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Hardware$keyboard_arrow_down = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M14.83 16.42L24 25.59l9.17-9.17L36 19.25l-12 12-12-12z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Hardware$keyboard_arrow_up = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M14.83 30.83L24 21.66l9.17 9.17L36 28 24 16 12 28z')
+				]),
+			_List_Nil)
+		]));
+var $author$project$Button$Icon = function (a) {
+	return {$: 'Icon', a: a};
+};
+var $mdgriffith$elm_ui$Internal$Model$AlignY = function (a) {
+	return {$: 'AlignY', a: a};
+};
+var $mdgriffith$elm_ui$Internal$Model$CenterY = {$: 'CenterY'};
+var $mdgriffith$elm_ui$Element$centerY = $mdgriffith$elm_ui$Internal$Model$AlignY($mdgriffith$elm_ui$Internal$Model$CenterY);
+var $avh4$elm_color$Color$RgbaSpace = F4(
+	function (a, b, c, d) {
+		return {$: 'RgbaSpace', a: a, b: b, c: c, d: d};
+	});
+var $avh4$elm_color$Color$fromRgba = function (components) {
+	return A4($avh4$elm_color$Color$RgbaSpace, components.red, components.green, components.blue, components.alpha);
+};
+var $mdgriffith$elm_ui$Element$toRgb = function (_v0) {
+	var r = _v0.a;
+	var g = _v0.b;
+	var b = _v0.c;
+	var a = _v0.d;
+	return {alpha: a, blue: b, green: g, red: r};
+};
+var $author$project$Button$iconAsElement = F3(
+	function (ico, elementColor, size) {
+		var sizeString = $elm$core$String$fromInt(size);
+		return A2(
+			$mdgriffith$elm_ui$Element$el,
+			_List_fromArray(
+				[$mdgriffith$elm_ui$Element$centerX, $mdgriffith$elm_ui$Element$centerY]),
+			$mdgriffith$elm_ui$Element$html(
+				A2(
+					$elm$svg$Svg$svg,
+					_List_fromArray(
+						[
+							$elm$svg$Svg$Attributes$width(sizeString),
+							$elm$svg$Svg$Attributes$height(sizeString),
+							$elm$svg$Svg$Attributes$viewBox(
+							A2(
+								$elm$core$String$join,
+								' ',
+								A2(
+									$elm$core$List$map,
+									$elm$core$String$fromInt,
+									_List_fromArray(
+										[0, 0, size, size]))))
+						]),
+					_List_fromArray(
+						[
+							A2(
+							ico,
+							$avh4$elm_color$Color$fromRgba(
+								$mdgriffith$elm_ui$Element$toRgb(elementColor)),
+							size)
+						]))));
+	});
+var $author$project$Button$makeIcon = function (ico) {
+	return $author$project$Button$Icon(
+		$author$project$Button$iconAsElement(ico));
+};
+var $danmarcab$material_icons$Material$Icons$Av$pause_circle_filled = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm-2 28h-4V16h4v16zm8 0h-4V16h4v16z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Av$play_circle_filled = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm-4 29V15l12 9-12 9z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Content$redo = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M36.79 21.2C33.11 17.97 28.29 16 23 16c-9.3 0-17.17 6.06-19.92 14.44L7.81 32c2.1-6.39 8.1-11 15.19-11 3.91 0 7.46 1.44 10.23 3.77L26 32h18V14l-7.21 7.2z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Content$save = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M34 6H10c-2.21 0-4 1.79-4 4v28c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V14l-8-8zM24 38c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm6-20H10v-8h20v8z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Av$stop = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M12 12h24v24H12z')
+				]),
+			_List_Nil)
+		]));
+var $danmarcab$material_icons$Material$Icons$Content$undo = A2(
+	$danmarcab$material_icons$Material$Icons$Internal$icon,
+	'0 0 48 48',
+	_List_fromArray(
+		[
+			A2(
+			$elm$svg$Svg$path,
+			_List_fromArray(
+				[
+					$elm$svg$Svg$Attributes$d('M25 16c-5.29 0-10.11 1.97-13.8 5.2L4 14v18h18l-7.23-7.23C17.54 22.44 21.09 21 25 21c7.09 0 13.09 4.61 15.19 11l4.73-1.56C42.17 22.06 34.3 16 25 16z')
+				]),
+			_List_Nil)
+		]));
+var $author$project$Button$icon = {
+	add: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Content$add_circle),
+	copy: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Content$content_copy),
+	cross: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Content$clear),
+	crossCircle: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Navigation$cancel),
+	dec: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Hardware$keyboard_arrow_down),
+	down: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Navigation$arrow_downward),
+	edit: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Content$create),
+	inc: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Hardware$keyboard_arrow_up),
+	open: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$File$folder_open),
+	pause: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Av$pause_circle_filled),
+	play: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Av$play_circle_filled),
+	redo: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Content$redo),
+	save: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Content$save),
+	stop: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Av$stop),
+	tick: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Navigation$check),
+	undo: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Content$undo),
+	up: $author$project$Button$makeIcon($danmarcab$material_icons$Material$Icons$Navigation$arrow_upward)
+};
+var $author$project$TestTimer$content = function (btn) {
+	switch (btn.$) {
+		case 'Undo':
+			return $author$project$Button$icon.undo;
+		case 'Redo':
+			return $author$project$Button$icon.redo;
+		case 'Add':
+			return $author$project$Button$icon.add;
+		case 'Copy':
+			return $author$project$Button$icon.copy;
+		case 'Delete':
+			return $author$project$Button$icon.cross;
+		case 'Save':
+			return $author$project$Button$Text('Save');
+		case 'Cancel':
+			return $author$project$Button$Text('Cancel');
+		case 'Pause':
+			return $author$project$Button$icon.pause;
+		case 'Stop':
+			return $author$project$Button$icon.stop;
+		default:
+			return $author$project$Button$icon.play;
+	}
+};
+var $author$project$Size$button = {large: 40, normal: 20, small: 8};
+var $mdgriffith$elm_ui$Element$rgb = F3(
+	function (r, g, b) {
+		return A4($mdgriffith$elm_ui$Internal$Model$Rgba, r, g, b, 1);
+	});
+var $mdgriffith$elm_ui$Element$rgb255 = F3(
+	function (red, green, blue) {
+		return A4($mdgriffith$elm_ui$Internal$Model$Rgba, red / 255, green / 255, blue / 255, 1);
+	});
+var $mdgriffith$elm_ui$Element$rgba255 = F4(
+	function (red, green, blue, a) {
+		return A4($mdgriffith$elm_ui$Internal$Model$Rgba, red / 255, green / 255, blue / 255, a);
+	});
+var $author$project$Colour$natural = {
+	appleWhite: A3($mdgriffith$elm_ui$Element$rgb, 0.85, 1, 0.85),
+	black: A3($mdgriffith$elm_ui$Element$rgb255, 2, 7, 14),
+	blue: A3($mdgriffith$elm_ui$Element$rgb255, 72, 144, 226),
+	brown: A3($mdgriffith$elm_ui$Element$rgb255, 127, 71, 40),
+	cyan: A3($mdgriffith$elm_ui$Element$rgb255, 137, 242, 228),
+	darkGrey: A3($mdgriffith$elm_ui$Element$rgb255, 157, 155, 156),
+	gold: A3($mdgriffith$elm_ui$Element$rgb255, 241, 202, 4),
+	green: A3($mdgriffith$elm_ui$Element$rgb255, 118, 212, 143),
+	lightGrey: A3($mdgriffith$elm_ui$Element$rgb255, 226, 229, 234),
+	lilac: A3($mdgriffith$elm_ui$Element$rgb255, 161, 149, 219),
+	lime: A3($mdgriffith$elm_ui$Element$rgb255, 142, 191, 1),
+	maroon: A3($mdgriffith$elm_ui$Element$rgb, 0.6, 0, 0.2),
+	mauve: A4($mdgriffith$elm_ui$Element$rgba255, 203, 152, 167, 1),
+	midGrey: A3($mdgriffith$elm_ui$Element$rgb255, 217, 218, 222),
+	orange: A3($mdgriffith$elm_ui$Element$rgb255, 248, 139, 38),
+	paleBlue: A3($mdgriffith$elm_ui$Element$rgb255, 177, 209, 250),
+	paleGreen: A3($mdgriffith$elm_ui$Element$rgb255, 209, 237, 191),
+	pink: A3($mdgriffith$elm_ui$Element$rgb255, 252, 220, 244),
+	purple: A3($mdgriffith$elm_ui$Element$rgb255, 110, 85, 115),
+	red: A3($mdgriffith$elm_ui$Element$rgb255, 217, 34, 44),
+	teal: A3($mdgriffith$elm_ui$Element$rgb255, 77, 205, 185),
+	veryLightGrey: A3($mdgriffith$elm_ui$Element$rgb255, 237, 242, 246),
+	white: A3($mdgriffith$elm_ui$Element$rgb255, 246, 251, 254),
+	yellow: A3($mdgriffith$elm_ui$Element$rgb255, 250, 237, 78)
+};
+var $author$project$TestTimer$defaultButtonStyle = {
+	borderRounding: 10,
+	disabled: $author$project$Colour$natural.veryLightGrey,
+	enabled: $author$project$Colour$natural.paleBlue,
+	mouseOver: $elm$core$Maybe$Just($author$project$Colour$natural.appleWhite),
+	size: $author$project$Size$button.large
+};
+var $author$project$Size$generousFont = {large: 40, normal: 20, small: 8};
+var $author$project$TestTimer$getButtonStyle = function (i) {
+	switch (i.$) {
+		case 'Large':
+			return $author$project$TestTimer$defaultButtonStyle;
+		case 'Small':
+			return _Utils_update(
+				$author$project$TestTimer$defaultButtonStyle,
+				{size: $author$project$Size$button.normal});
+		case 'SmallRed':
+			return _Utils_update(
+				$author$project$TestTimer$defaultButtonStyle,
+				{
+					mouseOver: $elm$core$Maybe$Just($author$project$Colour$natural.pink),
+					size: $author$project$Size$button.normal
+				});
+		case 'Text':
+			return _Utils_update(
+				$author$project$TestTimer$defaultButtonStyle,
+				{
+					mouseOver: $elm$core$Maybe$Just($author$project$Colour$natural.blue),
+					size: $author$project$Size$generousFont.normal
+				});
+		default:
+			var colour = i.a;
+			return _Utils_update(
+				$author$project$TestTimer$defaultButtonStyle,
+				{
+					disabled: function () {
+						switch (colour.$) {
+							case 'Red':
+								return $author$project$Colour$natural.red;
+							case 'Grey':
+								return $author$project$Colour$natural.midGrey;
+							default:
+								return $author$project$Colour$natural.green;
+						}
+					}(),
+					mouseOver: $elm$core$Maybe$Nothing
+				});
+	}
 };
 var $mdgriffith$elm_ui$Internal$Model$Button = {$: 'Button'};
 var $mdgriffith$elm_ui$Internal$Model$Describe = function (a) {
@@ -12570,15 +13019,22 @@ var $mdgriffith$elm_ui$Element$Input$button = F2(
 				_List_fromArray(
 					[label])));
 	});
-var $mdgriffith$elm_ui$Internal$Model$Focus = {$: 'Focus'};
+var $mdgriffith$elm_ui$Element$Background$color = function (clr) {
+	return A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$bgColor,
+		A3(
+			$mdgriffith$elm_ui$Internal$Model$Colored,
+			'bg-' + $mdgriffith$elm_ui$Internal$Model$formatColorClass(clr),
+			'background-color',
+			clr));
+};
+var $mdgriffith$elm_ui$Internal$Model$Hover = {$: 'Hover'};
 var $mdgriffith$elm_ui$Internal$Model$PseudoSelector = F2(
 	function (a, b) {
 		return {$: 'PseudoSelector', a: a, b: b};
 	});
-var $mdgriffith$elm_ui$Internal$Flag$focus = $mdgriffith$elm_ui$Internal$Flag$flag(31);
-var $mdgriffith$elm_ui$Internal$Model$AlignY = function (a) {
-	return {$: 'AlignY', a: a};
-};
+var $mdgriffith$elm_ui$Internal$Flag$hover = $mdgriffith$elm_ui$Internal$Flag$flag(33);
 var $mdgriffith$elm_ui$Internal$Model$Nearby = F2(
 	function (a, b) {
 		return {$: 'Nearby', a: a, b: b};
@@ -12702,17 +13158,6 @@ var $mdgriffith$elm_ui$Internal$Model$unwrapDecorations = function (attrs) {
 		$mdgriffith$elm_ui$Internal$Model$Transform(transform),
 		styles);
 };
-var $mdgriffith$elm_ui$Element$focused = function (decs) {
-	return A2(
-		$mdgriffith$elm_ui$Internal$Model$StyleClass,
-		$mdgriffith$elm_ui$Internal$Flag$focus,
-		A2(
-			$mdgriffith$elm_ui$Internal$Model$PseudoSelector,
-			$mdgriffith$elm_ui$Internal$Model$Focus,
-			$mdgriffith$elm_ui$Internal$Model$unwrapDecorations(decs)));
-};
-var $mdgriffith$elm_ui$Internal$Model$Hover = {$: 'Hover'};
-var $mdgriffith$elm_ui$Internal$Flag$hover = $mdgriffith$elm_ui$Internal$Flag$flag(33);
 var $mdgriffith$elm_ui$Element$mouseOver = function (decs) {
 	return A2(
 		$mdgriffith$elm_ui$Internal$Model$StyleClass,
@@ -12722,70 +13167,86 @@ var $mdgriffith$elm_ui$Element$mouseOver = function (decs) {
 			$mdgriffith$elm_ui$Internal$Model$Hover,
 			$mdgriffith$elm_ui$Internal$Model$unwrapDecorations(decs)));
 };
-var $author$project$LookAndFeel$autoButton = function (info) {
-	var shape = _List_fromArray(
-		[$author$project$LookAndFeel$borderRounded.normal, $author$project$LookAndFeel$padding.normal]);
-	var attrs = function () {
-		var _v0 = info.onPress;
-		if (_v0.$ === 'Just') {
-			var a = _v0.a;
-			return _Utils_ap(
-				shape,
-				_List_fromArray(
-					[
-						info.autoButtonColors.normalColor,
-						$mdgriffith$elm_ui$Element$focused(
-						_List_fromArray(
-							[info.autoButtonColors.focusedColor])),
-						$mdgriffith$elm_ui$Element$mouseOver(
-						_List_fromArray(
-							[info.autoButtonColors.focusedColor]))
-					]));
-		} else {
-			return _Utils_ap(
-				shape,
-				_List_fromArray(
-					[info.autoButtonColors.disabledColor]));
-		}
-	}();
-	return A2(
-		$mdgriffith$elm_ui$Element$Input$button,
-		attrs,
-		{label: info.label, onPress: info.onPress});
-};
-var $mdgriffith$elm_ui$Element$rgb = F3(
-	function (r, g, b) {
-		return A4($mdgriffith$elm_ui$Internal$Model$Rgba, r, g, b, 1);
-	});
-var $author$project$LookAndFeel$appPalette = {
-	blue: A3($mdgriffith$elm_ui$Element$rgb, 0.3255, 0.3255, 0.9176),
-	_default: A3($mdgriffith$elm_ui$Element$rgb, 0.7804, 0.85, 0.7804),
-	disabled: A3($mdgriffith$elm_ui$Element$rgb, 0.9, 0.9, 0.9),
-	errorDark: A3($mdgriffith$elm_ui$Element$rgb, 0.5, 0, 0),
-	errorLight: A3($mdgriffith$elm_ui$Element$rgb, 1, 0, 0),
-	green: A3($mdgriffith$elm_ui$Element$rgb, 0.1, 0.9, 0.3),
-	greenerBlue: A3($mdgriffith$elm_ui$Element$rgb, 0.3255, 0.6431, 0.9176),
-	shadow: A3($mdgriffith$elm_ui$Element$rgb, 0.4, 0.4, 0.4)
-};
-var $mdgriffith$elm_ui$Element$Background$color = function (clr) {
+var $mdgriffith$elm_ui$Internal$Flag$borderRound = $mdgriffith$elm_ui$Internal$Flag$flag(17);
+var $mdgriffith$elm_ui$Element$Border$rounded = function (radius) {
 	return A2(
 		$mdgriffith$elm_ui$Internal$Model$StyleClass,
-		$mdgriffith$elm_ui$Internal$Flag$bgColor,
+		$mdgriffith$elm_ui$Internal$Flag$borderRound,
 		A3(
-			$mdgriffith$elm_ui$Internal$Model$Colored,
-			'bg-' + $mdgriffith$elm_ui$Internal$Model$formatColorClass(clr),
-			'background-color',
-			clr));
+			$mdgriffith$elm_ui$Internal$Model$Single,
+			'br-' + $elm$core$String$fromInt(radius),
+			'border-radius',
+			$elm$core$String$fromInt(radius) + 'px'));
 };
-var $author$project$LookAndFeel$buttonColor = {
-	blue: $mdgriffith$elm_ui$Element$Background$color($author$project$LookAndFeel$appPalette.blue),
-	disabled: $mdgriffith$elm_ui$Element$Background$color($author$project$LookAndFeel$appPalette.disabled),
-	green: $mdgriffith$elm_ui$Element$Background$color($author$project$LookAndFeel$appPalette.green),
-	greenerBlue: $mdgriffith$elm_ui$Element$Background$color($author$project$LookAndFeel$appPalette.greenerBlue)
-};
-var $author$project$LookAndFeel$autoButtonColors = {
-	blue: {disabledColor: $author$project$LookAndFeel$buttonColor.disabled, focusedColor: $author$project$LookAndFeel$buttonColor.greenerBlue, normalColor: $author$project$LookAndFeel$buttonColor.blue}
-};
+var $author$project$Button$makeButton = F5(
+	function (styleFunction, contentFunction, btn, style, enabledMsg) {
+		var _v0 = styleFunction(style);
+		var enabled = _v0.enabled;
+		var disabled = _v0.disabled;
+		var size = _v0.size;
+		var borderRounding = _v0.borderRounding;
+		var mouseOver = _v0.mouseOver;
+		var colour = function () {
+			if (enabledMsg.$ === 'Just') {
+				return enabled;
+			} else {
+				return disabled;
+			}
+		}();
+		var perhapsMouseOver = function () {
+			var _v2 = _Utils_Tuple2(mouseOver, enabledMsg);
+			if ((_v2.a.$ === 'Just') && (_v2.b.$ === 'Just')) {
+				var highlightColour = _v2.a.a;
+				return function (attrs) {
+					return A2(
+						$elm$core$List$cons,
+						$mdgriffith$elm_ui$Element$mouseOver(
+							_List_fromArray(
+								[
+									$mdgriffith$elm_ui$Element$Background$color(highlightColour)
+								])),
+						attrs);
+				};
+			} else {
+				return $elm$core$Basics$identity;
+			}
+		}();
+		return A2(
+			$mdgriffith$elm_ui$Element$Input$button,
+			_List_fromArray(
+				[$mdgriffith$elm_ui$Element$centerY]),
+			{
+				label: function () {
+					var _v1 = contentFunction(btn);
+					if (_v1.$ === 'Text') {
+						var string = _v1.a;
+						return A2(
+							$mdgriffith$elm_ui$Element$el,
+							perhapsMouseOver(
+								_List_fromArray(
+									[
+										$mdgriffith$elm_ui$Element$Border$rounded(borderRounding),
+										$mdgriffith$elm_ui$Element$padding(borderRounding),
+										$mdgriffith$elm_ui$Element$Background$color(colour),
+										$mdgriffith$elm_ui$Element$Font$size(size)
+									])),
+							$mdgriffith$elm_ui$Element$text(string));
+					} else {
+						var materialIcon = _v1.a;
+						return A2(
+							$mdgriffith$elm_ui$Element$el,
+							perhapsMouseOver(
+								_List_fromArray(
+									[
+										$mdgriffith$elm_ui$Element$Border$rounded(borderRounding)
+									])),
+							A2(materialIcon, colour, size));
+					}
+				}(),
+				onPress: enabledMsg
+			});
+	});
+var $author$project$TestTimer$button = A2($author$project$Button$makeButton, $author$project$TestTimer$getButtonStyle, $author$project$TestTimer$content);
 var $mdgriffith$elm_ui$Internal$Model$Left = {$: 'Left'};
 var $mdgriffith$elm_ui$Element$alignLeft = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Left);
 var $mdgriffith$elm_ui$Internal$Model$LivePolite = {$: 'LivePolite'};
@@ -12867,8 +13328,6 @@ var $mdgriffith$elm_ui$Element$Input$applyLabel = F3(
 		}
 	});
 var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
-var $mdgriffith$elm_ui$Internal$Model$CenterY = {$: 'CenterY'};
-var $mdgriffith$elm_ui$Element$centerY = $mdgriffith$elm_ui$Internal$Model$AlignY($mdgriffith$elm_ui$Internal$Model$CenterY);
 var $mdgriffith$elm_ui$Internal$Model$Label = function (a) {
 	return {$: 'Label', a: a};
 };
@@ -12948,34 +13407,6 @@ var $mdgriffith$elm_ui$Element$Input$checkbox = F2(
 						[
 							icon(checked)
 						]))));
-	});
-var $author$project$LookAndFeel$mouseOverColor = F2(
-	function (color, thing) {
-		return A2(
-			$mdgriffith$elm_ui$Element$el,
-			_List_fromArray(
-				[
-					$mdgriffith$elm_ui$Element$mouseOver(
-					_List_fromArray(
-						[
-							$mdgriffith$elm_ui$Element$Background$color(color)
-						])),
-					$mdgriffith$elm_ui$Element$Border$rounded(10)
-				]),
-			thing);
-	});
-var $author$project$LookAndFeel$clickHoverColour = F3(
-	function (colour, thing, msg) {
-		return A2(
-			$author$project$LookAndFeel$mouseOverColor,
-			colour,
-			A2(
-				$mdgriffith$elm_ui$Element$el,
-				_List_fromArray(
-					[
-						$mdgriffith$elm_ui$Element$Events$onClick(msg)
-					]),
-				thing));
 	});
 var $mdgriffith$elm_ui$Internal$Flag$fontAlignment = $mdgriffith$elm_ui$Internal$Flag$flag(12);
 var $mdgriffith$elm_ui$Element$Font$center = A2($mdgriffith$elm_ui$Internal$Model$Class, $mdgriffith$elm_ui$Internal$Flag$fontAlignment, $mdgriffith$elm_ui$Internal$Style$classes.textCenter);
@@ -13185,377 +13616,10 @@ var $elm_community$undo_redo$UndoList$hasPast = A2(
 	function ($) {
 		return $.past;
 	});
-var $avh4$elm_color$Color$RgbaSpace = F4(
-	function (a, b, c, d) {
-		return {$: 'RgbaSpace', a: a, b: b, c: c, d: d};
+var $author$project$TestTimer$ifTrueJust = F2(
+	function (a, _true) {
+		return _true ? $elm$core$Maybe$Just(a) : $elm$core$Maybe$Nothing;
 	});
-var $avh4$elm_color$Color$hsla = F4(
-	function (hue, sat, light, alpha) {
-		var _v0 = _Utils_Tuple3(hue, sat, light);
-		var h = _v0.a;
-		var s = _v0.b;
-		var l = _v0.c;
-		var m2 = (l <= 0.5) ? (l * (s + 1)) : ((l + s) - (l * s));
-		var m1 = (l * 2) - m2;
-		var hueToRgb = function (h__) {
-			var h_ = (h__ < 0) ? (h__ + 1) : ((h__ > 1) ? (h__ - 1) : h__);
-			return ((h_ * 6) < 1) ? (m1 + (((m2 - m1) * h_) * 6)) : (((h_ * 2) < 1) ? m2 : (((h_ * 3) < 2) ? (m1 + (((m2 - m1) * ((2 / 3) - h_)) * 6)) : m1));
-		};
-		var b = hueToRgb(h - (1 / 3));
-		var g = hueToRgb(h);
-		var r = hueToRgb(h + (1 / 3));
-		return A4($avh4$elm_color$Color$RgbaSpace, r, g, b, alpha);
-	});
-var $avh4$elm_color$Color$hsl = F3(
-	function (h, s, l) {
-		return A4($avh4$elm_color$Color$hsla, h, s, l, 1.0);
-	});
-var $avh4$elm_color$Color$toRgba = function (_v0) {
-	var r = _v0.a;
-	var g = _v0.b;
-	var b = _v0.c;
-	var a = _v0.d;
-	return {alpha: a, blue: b, green: g, red: r};
-};
-var $author$project$LookAndFeel$hsl = F3(
-	function (h, s, l) {
-		return function (rgba) {
-			return A3($mdgriffith$elm_ui$Element$rgb, rgba.red, rgba.green, rgba.blue);
-		}(
-			$avh4$elm_color$Color$toRgba(
-				A3($avh4$elm_color$Color$hsl, h / 360, s, l)));
-	});
-var $author$project$LookAndFeel$pale = {
-	blue: A3($author$project$LookAndFeel$hsl, 210, 1, 0.9),
-	green: A3($author$project$LookAndFeel$hsl, 90, 1, 0.85),
-	grey: A3($mdgriffith$elm_ui$Element$rgb, 0.9, 0.9, 0.9),
-	orange: A3($author$project$LookAndFeel$hsl, 45, 1, 0.85),
-	purple: A3($author$project$LookAndFeel$hsl, 270, 1, 0.85),
-	red: A3($author$project$LookAndFeel$hsl, 0, 1, 0.9),
-	yellow: A3($author$project$LookAndFeel$hsl, 60, 1, 0.8)
-};
-var $author$project$TestTimer$hoverGreen = F2(
-	function (msg, button) {
-		return A3($author$project$LookAndFeel$clickHoverColour, $author$project$LookAndFeel$pale.green, button, msg);
-	});
-var $elm$svg$Svg$Attributes$d = _VirtualDom_attribute('d');
-var $danmarcab$material_icons$Material$Icons$Internal$toRgbaString = function (color) {
-	var _v0 = $avh4$elm_color$Color$toRgba(color);
-	var red = _v0.red;
-	var green = _v0.green;
-	var blue = _v0.blue;
-	var alpha = _v0.alpha;
-	return 'rgba(' + ($elm$core$String$fromInt(
-		$elm$core$Basics$round(255 * red)) + (',' + ($elm$core$String$fromInt(
-		$elm$core$Basics$round(255 * green)) + (',' + ($elm$core$String$fromInt(
-		$elm$core$Basics$round(255 * blue)) + (',' + ($elm$core$String$fromFloat(alpha) + ')')))))));
-};
-var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
-var $danmarcab$material_icons$Material$Icons$Internal$icon = F4(
-	function (viewBox, children, color, size) {
-		var stringSize = $elm$core$String$fromInt(size);
-		var stringColor = $danmarcab$material_icons$Material$Icons$Internal$toRgbaString(color);
-		return A2(
-			$elm$svg$Svg$svg,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$width(stringSize),
-					$elm$svg$Svg$Attributes$height(stringSize),
-					$elm$svg$Svg$Attributes$viewBox(viewBox)
-				]),
-			_List_fromArray(
-				[
-					A2(
-					$elm$svg$Svg$g,
-					_List_fromArray(
-						[
-							$elm$svg$Svg$Attributes$fill(stringColor)
-						]),
-					children)
-				]));
-	});
-var $elm$svg$Svg$path = $elm$svg$Svg$trustedNode('path');
-var $danmarcab$material_icons$Material$Icons$Content$add_circle = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm10 22h-8v8h-4v-8h-8v-4h8v-8h4v8h8v4z')
-				]),
-			_List_Nil)
-		]));
-var $danmarcab$material_icons$Material$Icons$Navigation$arrow_downward = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M40 24l-2.82-2.82L26 32.34V8h-4v24.34L10.84 21.16 8 24l16 16 16-16z')
-				]),
-			_List_Nil)
-		]));
-var $danmarcab$material_icons$Material$Icons$Navigation$arrow_upward = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M8 24l2.83 2.83L22 15.66V40h4V15.66l11.17 11.17L40 24 24 8 8 24z')
-				]),
-			_List_Nil)
-		]));
-var $avh4$elm_color$Color$black = A4($avh4$elm_color$Color$RgbaSpace, 0 / 255, 0 / 255, 0 / 255, 1.0);
-var $avh4$elm_color$Color$blue = A4($avh4$elm_color$Color$RgbaSpace, 52 / 255, 101 / 255, 164 / 255, 1.0);
-var $danmarcab$material_icons$Material$Icons$Navigation$cancel = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm10 27.17L31.17 34 24 26.83 16.83 34 14 31.17 21.17 24 14 16.83 16.83 14 24 21.17 31.17 14 34 16.83 26.83 24 34 31.17z')
-				]),
-			_List_Nil)
-		]));
-var $danmarcab$material_icons$Material$Icons$Navigation$check = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M18 32.34L9.66 24l-2.83 2.83L18 38l24-24-2.83-2.83z')
-				]),
-			_List_Nil)
-		]));
-var $danmarcab$material_icons$Material$Icons$Content$clear = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M38 12.83L35.17 10 24 21.17 12.83 10 10 12.83 21.17 24 10 35.17 12.83 38 24 26.83 35.17 38 38 35.17 26.83 24z')
-				]),
-			_List_Nil)
-		]));
-var $danmarcab$material_icons$Material$Icons$Content$content_copy = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M32 2H8C5.79 2 4 3.79 4 6v28h4V6h24V2zm6 8H16c-2.21 0-4 1.79-4 4v28c0 2.21 1.79 4 4 4h22c2.21 0 4-1.79 4-4V14c0-2.21-1.79-4-4-4zm0 32H16V14h22v28z')
-				]),
-			_List_Nil)
-		]));
-var $danmarcab$material_icons$Material$Icons$Content$create = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M6 34.5V42h7.5l22.13-22.13-7.5-7.5L6 34.5zm35.41-20.41c.78-.78.78-2.05 0-2.83l-4.67-4.67c-.78-.78-2.05-.78-2.83 0l-3.66 3.66 7.5 7.5 3.66-3.66z')
-				]),
-			_List_Nil)
-		]));
-var $avh4$elm_color$Color$darkRed = A4($avh4$elm_color$Color$RgbaSpace, 164 / 255, 0 / 255, 0 / 255, 1.0);
-var $danmarcab$material_icons$Material$Icons$File$folder_open = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M40 12H24l-4-4H8c-2.21 0-3.98 1.79-3.98 4L4 36c0 2.21 1.79 4 4 4h32c2.21 0 4-1.79 4-4V16c0-2.21-1.79-4-4-4zm0 24H8V16h32v20z')
-				]),
-			_List_Nil)
-		]));
-var $avh4$elm_color$Color$green = A4($avh4$elm_color$Color$RgbaSpace, 115 / 255, 210 / 255, 22 / 255, 1.0);
-var $avh4$elm_color$Color$grey = A4($avh4$elm_color$Color$RgbaSpace, 211 / 255, 215 / 255, 207 / 255, 1.0);
-var $author$project$LookAndFeel$iconElement = F3(
-	function (icon, size, colorColor) {
-		var sizeString = $elm$core$String$fromInt(size);
-		return A2(
-			$mdgriffith$elm_ui$Element$el,
-			_List_fromArray(
-				[$mdgriffith$elm_ui$Element$centerX, $mdgriffith$elm_ui$Element$centerY]),
-			$mdgriffith$elm_ui$Element$html(
-				A2(
-					$elm$svg$Svg$svg,
-					_List_fromArray(
-						[
-							$elm$svg$Svg$Attributes$width(sizeString),
-							$elm$svg$Svg$Attributes$height(sizeString),
-							$elm$svg$Svg$Attributes$viewBox(
-							A2(
-								$elm$core$String$join,
-								' ',
-								A2(
-									$elm$core$List$map,
-									$elm$core$String$fromInt,
-									_List_fromArray(
-										[0, 0, size, size]))))
-						]),
-					_List_fromArray(
-						[
-							A2(icon, colorColor, size)
-						]))));
-	});
-var $author$project$LookAndFeel$iconSize = {large: 40, normal: 20, small: 8};
-var $danmarcab$material_icons$Material$Icons$Hardware$keyboard_arrow_down = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M14.83 16.42L24 25.59l9.17-9.17L36 19.25l-12 12-12-12z')
-				]),
-			_List_Nil)
-		]));
-var $danmarcab$material_icons$Material$Icons$Hardware$keyboard_arrow_up = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M14.83 30.83L24 21.66l9.17 9.17L36 28 24 16 12 28z')
-				]),
-			_List_Nil)
-		]));
-var $danmarcab$material_icons$Material$Icons$Av$pause_circle_filled = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm-2 28h-4V16h4v16zm8 0h-4V16h4v16z')
-				]),
-			_List_Nil)
-		]));
-var $danmarcab$material_icons$Material$Icons$Av$play_circle_filled = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm-4 29V15l12 9-12 9z')
-				]),
-			_List_Nil)
-		]));
-var $danmarcab$material_icons$Material$Icons$Content$redo = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M36.79 21.2C33.11 17.97 28.29 16 23 16c-9.3 0-17.17 6.06-19.92 14.44L7.81 32c2.1-6.39 8.1-11 15.19-11 3.91 0 7.46 1.44 10.23 3.77L26 32h18V14l-7.21 7.2z')
-				]),
-			_List_Nil)
-		]));
-var $danmarcab$material_icons$Material$Icons$Content$save = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M34 6H10c-2.21 0-4 1.79-4 4v28c0 2.21 1.79 4 4 4h28c2.21 0 4-1.79 4-4V14l-8-8zM24 38c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm6-20H10v-8h20v8z')
-				]),
-			_List_Nil)
-		]));
-var $danmarcab$material_icons$Material$Icons$Av$stop = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M12 12h24v24H12z')
-				]),
-			_List_Nil)
-		]));
-var $danmarcab$material_icons$Material$Icons$Content$undo = A2(
-	$danmarcab$material_icons$Material$Icons$Internal$icon,
-	'0 0 48 48',
-	_List_fromArray(
-		[
-			A2(
-			$elm$svg$Svg$path,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$d('M25 16c-5.29 0-10.11 1.97-13.8 5.2L4 14v18h18l-7.23-7.23C17.54 22.44 21.09 21 25 21c7.09 0 13.09 4.61 15.19 11l4.73-1.56C42.17 22.06 34.3 16 25 16z')
-				]),
-			_List_Nil)
-		]));
-var $author$project$LookAndFeel$icons = {
-	addLarge: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Content$add_circle, $author$project$LookAndFeel$iconSize.large, $avh4$elm_color$Color$blue),
-	addNormal: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Content$add_circle, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$black),
-	copyNormal: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Content$content_copy, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$black),
-	cross: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Content$clear, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$black),
-	crossCircle: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Navigation$cancel, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$black),
-	decSmall: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Hardware$keyboard_arrow_down, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$black),
-	down: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Navigation$arrow_downward, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$black),
-	edit: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Content$create, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$black),
-	incSmall: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Hardware$keyboard_arrow_up, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$black),
-	open: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$File$folder_open, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$black),
-	pauseGrey: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Av$pause_circle_filled, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$grey),
-	pauseGreyLarge: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Av$pause_circle_filled, $author$project$LookAndFeel$iconSize.large, $avh4$elm_color$Color$grey),
-	playGreen: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Av$play_circle_filled, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$green),
-	playGreenLarge: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Av$play_circle_filled, $author$project$LookAndFeel$iconSize.large, $avh4$elm_color$Color$green),
-	redoLargeBlue: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Content$redo, $author$project$LookAndFeel$iconSize.large, $avh4$elm_color$Color$blue),
-	redoLargeGrey: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Content$redo, $author$project$LookAndFeel$iconSize.large, $avh4$elm_color$Color$grey),
-	save: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Content$save, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$black),
-	stopRed: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Av$stop, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$darkRed),
-	stopRedLarge: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Av$stop, $author$project$LookAndFeel$iconSize.large, $avh4$elm_color$Color$darkRed),
-	tick: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Navigation$check, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$black),
-	undoLargeBlue: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Content$undo, $author$project$LookAndFeel$iconSize.large, $avh4$elm_color$Color$blue),
-	undoLargeGrey: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Content$undo, $author$project$LookAndFeel$iconSize.large, $avh4$elm_color$Color$grey),
-	up: A3($author$project$LookAndFeel$iconElement, $danmarcab$material_icons$Material$Icons$Navigation$arrow_upward, $author$project$LookAndFeel$iconSize.normal, $avh4$elm_color$Color$black)
-};
 var $mdgriffith$elm_ui$Element$Input$HiddenLabel = function (a) {
 	return {$: 'HiddenLabel', a: a};
 };
@@ -14665,7 +14729,7 @@ var $mdgriffith$elm_ui$Element$Input$Placeholder = F2(
 		return {$: 'Placeholder', a: a, b: b};
 	});
 var $mdgriffith$elm_ui$Element$Input$placeholder = $mdgriffith$elm_ui$Element$Input$Placeholder;
-var $author$project$LookAndFeel$placeholderText = function (string) {
+var $author$project$Size$placeholderText = function (string) {
 	return (string === '') ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(
 		A2(
 			$mdgriffith$elm_ui$Element$Input$placeholder,
@@ -14682,19 +14746,37 @@ var $author$project$TestTimer$viewTestBeingAdded = F2(
 			return A2(
 				$mdgriffith$elm_ui$Element$row,
 				_List_fromArray(
-					[$author$project$LookAndFeel$spacing.large]),
+					[$author$project$Size$spacing.large]),
 				_List_fromArray(
 					[
-						A3($author$project$LookAndFeel$clickHoverColour, $author$project$LookAndFeel$pale.green, $author$project$LookAndFeel$icons.addLarge, $author$project$TestTimer$StartMakingNewTest),
-						$elm_community$undo_redo$UndoList$hasPast(model.tests) ? A2($author$project$TestTimer$hoverGreen, $author$project$TestTimer$Undo, $author$project$LookAndFeel$icons.undoLargeBlue) : $author$project$LookAndFeel$icons.undoLargeGrey,
-						$elm_community$undo_redo$UndoList$hasFuture(model.tests) ? A2($author$project$TestTimer$hoverGreen, $author$project$TestTimer$Redo, $author$project$LookAndFeel$icons.redoLargeBlue) : $author$project$LookAndFeel$icons.redoLargeGrey
+						A3(
+						$author$project$TestTimer$button,
+						$author$project$TestTimer$Add,
+						$author$project$TestTimer$Large,
+						$elm$core$Maybe$Just($author$project$TestTimer$AddTest)),
+						A3(
+						$author$project$TestTimer$button,
+						$author$project$TestTimer$Undo,
+						$author$project$TestTimer$Large,
+						A2(
+							$author$project$TestTimer$ifTrueJust,
+							$author$project$TestTimer$UndoLast,
+							$elm_community$undo_redo$UndoList$hasPast(model.tests))),
+						A3(
+						$author$project$TestTimer$button,
+						$author$project$TestTimer$Redo,
+						$author$project$TestTimer$Large,
+						A2(
+							$author$project$TestTimer$ifTrueJust,
+							$author$project$TestTimer$RedoLast,
+							$elm_community$undo_redo$UndoList$hasFuture(model.tests)))
 					]));
 		} else {
 			var newTest = mn.a;
 			return A2(
 				$mdgriffith$elm_ui$Element$column,
 				_List_fromArray(
-					[$author$project$LookAndFeel$spacing.normal]),
+					[$author$project$Size$spacing.normal]),
 				_List_fromArray(
 					[
 						A2(
@@ -14710,7 +14792,7 @@ var $author$project$TestTimer$viewTestBeingAdded = F2(
 								_List_Nil,
 								$mdgriffith$elm_ui$Element$text('Test name: ')),
 							onChange: A2($elm$core$Basics$composeL, $author$project$TestTimer$NewTest, $author$project$TestTimer$TypedName),
-							placeholder: $author$project$LookAndFeel$placeholderText('Type a name for the test'),
+							placeholder: $author$project$Size$placeholderText('Type a name for the test'),
 							text: newTest.name
 						}),
 						A2(
@@ -14770,50 +14852,54 @@ var $author$project$TestTimer$viewTestBeingAdded = F2(
 						A2(
 						$mdgriffith$elm_ui$Element$row,
 						_List_fromArray(
-							[$author$project$LookAndFeel$spacing.normal]),
+							[$author$project$Size$spacing.normal]),
 						_List_fromArray(
 							[
-								$author$project$LookAndFeel$autoButton(
-								{
-									autoButtonColors: $author$project$LookAndFeel$autoButtonColors.blue,
-									label: $mdgriffith$elm_ui$Element$text('Save'),
-									onPress: A2(
-										$elm$core$Maybe$map,
-										A2($elm$core$Basics$composeL, $author$project$TestTimer$NewTest, $author$project$TestTimer$SaveTest),
-										A2($author$project$TestTimer$makeTests, model, newTest))
-								}),
-								$author$project$LookAndFeel$autoButton(
-								{
-									autoButtonColors: $author$project$LookAndFeel$autoButtonColors.blue,
-									label: $mdgriffith$elm_ui$Element$text('Cancel'),
-									onPress: $elm$core$Maybe$Just(
-										$author$project$TestTimer$NewTest($author$project$TestTimer$CancelNewTest))
-								})
+								A3(
+								$author$project$TestTimer$button,
+								$author$project$TestTimer$Save,
+								$author$project$TestTimer$Text,
+								A2(
+									$elm$core$Maybe$map,
+									A2($elm$core$Basics$composeL, $author$project$TestTimer$NewTest, $author$project$TestTimer$SaveTest),
+									A2($author$project$TestTimer$makeTests, model, newTest))),
+								A3(
+								$author$project$TestTimer$button,
+								$author$project$TestTimer$Cancel,
+								$author$project$TestTimer$Text,
+								$elm$core$Maybe$Just(
+									$author$project$TestTimer$NewTest($author$project$TestTimer$CancelNewTest)))
 							]))
 					]));
 		}
 	});
+var $author$project$TestTimer$Delete = {$: 'Delete'};
 var $author$project$TestTimer$DeleteTest = function (a) {
 	return {$: 'DeleteTest', a: a};
 };
+var $author$project$TestTimer$SmallRed = {$: 'SmallRed'};
 var $author$project$TestTimer$deleteButton = F2(
 	function (index, _v0) {
 		return A3(
-			$author$project$LookAndFeel$clickHoverColour,
-			$author$project$LookAndFeel$pale.red,
-			$author$project$LookAndFeel$icons.cross,
-			$author$project$TestTimer$DeleteTest(index));
+			$author$project$TestTimer$button,
+			$author$project$TestTimer$Delete,
+			$author$project$TestTimer$SmallRed,
+			$elm$core$Maybe$Just(
+				$author$project$TestTimer$DeleteTest(index)));
 	});
-var $author$project$TestTimer$DuplicateTest = function (a) {
-	return {$: 'DuplicateTest', a: a};
+var $author$project$TestTimer$Copy = {$: 'Copy'};
+var $author$project$TestTimer$CopyTest = function (a) {
+	return {$: 'CopyTest', a: a};
 };
+var $author$project$TestTimer$Small = {$: 'Small'};
 var $author$project$TestTimer$duplicateButton = F2(
 	function (_v0, existingTest) {
 		return A3(
-			$author$project$LookAndFeel$clickHoverColour,
-			$author$project$LookAndFeel$pale.green,
-			$author$project$LookAndFeel$icons.copyNormal,
-			$author$project$TestTimer$DuplicateTest(existingTest));
+			$author$project$TestTimer$button,
+			$author$project$TestTimer$Copy,
+			$author$project$TestTimer$Small,
+			$elm$core$Maybe$Just(
+				$author$project$TestTimer$CopyTest(existingTest)));
 	});
 var $author$project$TestTimer$ifNotCurrentlyEditing = F4(
 	function (model, viewTest, index, test) {
@@ -15048,14 +15134,35 @@ var $mdgriffith$elm_ui$Element$indexedTable = F2(
 				data: config.data
 			});
 	});
+var $author$project$TestTimer$Go = {$: 'Go'};
+var $author$project$TestTimer$Green = {$: 'Green'};
+var $author$project$TestTimer$Grey = {$: 'Grey'};
+var $author$project$TestTimer$Info = function (a) {
+	return {$: 'Info', a: a};
+};
+var $author$project$TestTimer$Pause = {$: 'Pause'};
+var $author$project$TestTimer$Red = {$: 'Red'};
+var $author$project$TestTimer$Stop = {$: 'Stop'};
 var $author$project$TestTimer$showStatus = function (ts) {
 	switch (ts.$) {
 		case 'NotStarted':
-			return $author$project$LookAndFeel$icons.pauseGreyLarge;
+			return A3(
+				$author$project$TestTimer$button,
+				$author$project$TestTimer$Pause,
+				$author$project$TestTimer$Info($author$project$TestTimer$Grey),
+				$elm$core$Maybe$Nothing);
 		case 'InProgress':
-			return $author$project$LookAndFeel$icons.playGreenLarge;
+			return A3(
+				$author$project$TestTimer$button,
+				$author$project$TestTimer$Go,
+				$author$project$TestTimer$Info($author$project$TestTimer$Green),
+				$elm$core$Maybe$Nothing);
 		default:
-			return $author$project$LookAndFeel$icons.stopRedLarge;
+			return A3(
+				$author$project$TestTimer$button,
+				$author$project$TestTimer$Stop,
+				$author$project$TestTimer$Info($author$project$TestTimer$Red),
+				$elm$core$Maybe$Nothing);
 	}
 };
 var $author$project$TimeUtils$showTimeWithoutSeconds = F2(
@@ -15077,7 +15184,7 @@ var $author$project$TestTimer$viewTests = F2(
 		return A2(
 			$mdgriffith$elm_ui$Element$indexedTable,
 			_List_fromArray(
-				[$author$project$LookAndFeel$spacing.large, $author$project$LookAndFeel$fontSize.huge]),
+				[$author$project$Size$spacing.large, $author$project$Size$fontSize.huge]),
 			{
 				columns: _List_fromArray(
 					[
@@ -15094,7 +15201,11 @@ var $author$project$TestTimer$viewTests = F2(
 						header: $mdgriffith$elm_ui$Element$text('Test'),
 						view: F2(
 							function (_v1, test) {
-								return $mdgriffith$elm_ui$Element$text(test.name);
+								return A2(
+									$mdgriffith$elm_ui$Element$el,
+									_List_fromArray(
+										[$mdgriffith$elm_ui$Element$centerY]),
+									$mdgriffith$elm_ui$Element$text(test.name));
 							}),
 						width: $mdgriffith$elm_ui$Element$shrink
 					},
@@ -15102,8 +15213,12 @@ var $author$project$TestTimer$viewTests = F2(
 						header: $mdgriffith$elm_ui$Element$text('Start'),
 						view: F2(
 							function (_v2, test) {
-								return $mdgriffith$elm_ui$Element$text(
-									A2($author$project$TimeUtils$showTimeWithoutSeconds, model.timeZone, test.startTime));
+								return A2(
+									$mdgriffith$elm_ui$Element$el,
+									_List_fromArray(
+										[$mdgriffith$elm_ui$Element$centerY]),
+									$mdgriffith$elm_ui$Element$text(
+										A2($author$project$TimeUtils$showTimeWithoutSeconds, model.timeZone, test.startTime)));
 							}),
 						width: $mdgriffith$elm_ui$Element$shrink
 					},
@@ -15111,11 +15226,15 @@ var $author$project$TestTimer$viewTests = F2(
 						header: $mdgriffith$elm_ui$Element$text('Finish'),
 						view: F2(
 							function (_v3, test) {
-								return $mdgriffith$elm_ui$Element$text(
-									A2(
-										$author$project$TimeUtils$showTimeWithoutSeconds,
-										model.timeZone,
-										$author$project$TestTimer$finishTime(test)));
+								return A2(
+									$mdgriffith$elm_ui$Element$el,
+									_List_fromArray(
+										[$mdgriffith$elm_ui$Element$centerY]),
+									$mdgriffith$elm_ui$Element$text(
+										A2(
+											$author$project$TimeUtils$showTimeWithoutSeconds,
+											model.timeZone,
+											$author$project$TestTimer$finishTime(test))));
 							}),
 						width: $mdgriffith$elm_ui$Element$shrink
 					},
@@ -15138,13 +15257,13 @@ var $author$project$TestTimer$view = function (model) {
 		$mdgriffith$elm_ui$Element$layout,
 		_List_fromArray(
 			[
-				$author$project$LookAndFeel$padding.large,
+				$author$project$Size$padding.large,
 				$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill)
 			]),
 		A2(
 			$mdgriffith$elm_ui$Element$column,
 			_List_fromArray(
-				[$author$project$LookAndFeel$spacing.large]),
+				[$author$project$Size$spacing.large]),
 			_List_fromArray(
 				[
 					A2(
@@ -15159,7 +15278,7 @@ var $author$project$TestTimer$view = function (model) {
 							A2(
 							$mdgriffith$elm_ui$Element$el,
 							_List_fromArray(
-								[$author$project$LookAndFeel$fontSize.enormous, $mdgriffith$elm_ui$Element$centerX]),
+								[$author$project$Size$fontSize.enormous, $mdgriffith$elm_ui$Element$centerX]),
 							$mdgriffith$elm_ui$Element$text(
 								A2($author$project$TimeUtils$showTimeWithSeconds, model.timeZone, model.currentTime)))
 						])),
@@ -15175,7 +15294,7 @@ var $author$project$TestTimer$view = function (model) {
 							A2(
 							$mdgriffith$elm_ui$Element$column,
 							_List_fromArray(
-								[$author$project$LookAndFeel$spacing.large]),
+								[$author$project$Size$spacing.large]),
 							_List_fromArray(
 								[
 									A2($author$project$TestTimer$viewTests, model, model.tests.present),
