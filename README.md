@@ -4,6 +4,7 @@
 
 If you just want to use it, you just need [TestTimer.html](TestTimer.html), nothing else.
 
+(Note: this is coded in 100% elm, 0% html, but because I've included the html in the repository and it's LONG, it shows up as mainly html.)
 
 ## Running tests:
 ![screenshot time in digital and analog and a list of tests running with their start and finish times.](screenshot-tests-running.png?raw=true "Screenshot: running tests")
