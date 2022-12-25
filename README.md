@@ -2,7 +2,7 @@
  Displays the time large for during tests. 
  You can specify test start times and lengths.
 
-If you just want to use it, you just need TestTimer.html, nothing else.
+If you just want to use it, you just need [TestTimer.html](TestTimer.html?raw=true), nothing else.
 
 
 ## Running tests:
