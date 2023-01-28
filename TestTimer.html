@@ -5787,6 +5787,7 @@ var $author$project$TestTimer$defaultTest = function (model) {
 		addExtraTimeToo: true,
 		length: $elm$core$Maybe$Just(60),
 		name: '',
+		replaces: $elm$core$Maybe$Nothing,
 		startHours: $elm$core$Maybe$Just(
 			A2($elm$time$Time$toHour, model.timeZone, startTime)),
 		startMinutes: $elm$core$Maybe$Just(
@@ -5974,6 +5975,19 @@ var $author$project$TestTimer$duplicateTest = F2(
 			addExtraTimeToo: false,
 			length: $elm$core$Maybe$Just(test.lengthInMinutes),
 			name: test.name,
+			replaces: $elm$core$Maybe$Nothing,
+			startHours: $elm$core$Maybe$Just(hms.hours),
+			startMinutes: $elm$core$Maybe$Just(hms.minutes)
+		};
+	});
+var $author$project$TestTimer$editingTest = F3(
+	function (model, index, test) {
+		var hms = A2($author$project$TimeUtils$posixToHMS, model.timeZone, test.startTime);
+		return {
+			addExtraTimeToo: false,
+			length: $elm$core$Maybe$Just(test.lengthInMinutes),
+			name: test.name,
+			replaces: $elm$core$Maybe$Just(index),
 			startHours: $elm$core$Maybe$Just(hms.hours),
 			startMinutes: $elm$core$Maybe$Just(hms.minutes)
 		};
@@ -6089,8 +6103,16 @@ var $author$project$TestTimer$updateTests = F2(
 					model.tests)
 			});
 	});
-var $author$project$TestTimer$incorporateTestsAndCancelNewTest = F2(
-	function (newTests, model) {
+var $author$project$TestTimer$incorporateTestsAndCancelNewTest = F3(
+	function (replaces, newTests, model) {
+		var remove = function () {
+			if (replaces.$ === 'Nothing') {
+				return $elm$core$Basics$identity;
+			} else {
+				var index = replaces.a;
+				return $author$project$TestTimer$deleteAt(index);
+			}
+		}();
 		return A2(
 			$author$project$TestTimer$updateTests,
 			_Utils_update(
@@ -6098,8 +6120,11 @@ var $author$project$TestTimer$incorporateTestsAndCancelNewTest = F2(
 				{newTest: $elm$core$Maybe$Nothing}),
 			A2(
 				$elm$core$Basics$composeR,
-				$elm$core$Basics$append(newTests),
-				$author$project$TestTimer$sortTests));
+				remove,
+				A2(
+					$elm$core$Basics$composeR,
+					$elm$core$Basics$append(newTests),
+					$author$project$TestTimer$sortTests)));
 	});
 var $author$project$TestTimer$updateNewTest = F2(
 	function (msg, model) {
@@ -6150,8 +6175,9 @@ var $author$project$TestTimer$updateNewTest = F2(
 							newTest,
 							{addExtraTimeToo: et}));
 				case 'SaveTest':
-					var newTests = msg.a;
-					return A2($author$project$TestTimer$incorporateTestsAndCancelNewTest, newTests, model);
+					var replaces = msg.a;
+					var newTests = msg.b;
+					return A3($author$project$TestTimer$incorporateTestsAndCancelNewTest, replaces, newTests, model);
 				default:
 					return _Utils_update(
 						model,
@@ -6229,6 +6255,20 @@ var $author$project$TestTimer$update = F2(
 							{
 								newTest: $elm$core$Maybe$Just(
 									A2($author$project$TestTimer$duplicateTest, model, test))
+							});
+					} else {
+						return model;
+					}
+				case 'EditTest':
+					var index = msg.a;
+					var test = msg.b;
+					var _v3 = model.newTest;
+					if (_v3.$ === 'Nothing') {
+						return _Utils_update(
+							model,
+							{
+								newTest: $elm$core$Maybe$Just(
+									A3($author$project$TestTimer$editingTest, model, index, test))
 							});
 					} else {
 						return model;
@@ -12397,9 +12437,10 @@ var $author$project$TestTimer$NewTest = function (a) {
 var $author$project$TestTimer$Redo = {$: 'Redo'};
 var $author$project$TestTimer$RedoLast = {$: 'RedoLast'};
 var $author$project$TestTimer$Save = {$: 'Save'};
-var $author$project$TestTimer$SaveTest = function (a) {
-	return {$: 'SaveTest', a: a};
-};
+var $author$project$TestTimer$SaveTest = F2(
+	function (a, b) {
+		return {$: 'SaveTest', a: a, b: b};
+	});
 var $author$project$TestTimer$Text = {$: 'Text'};
 var $author$project$TestTimer$ToggleExtraTime = function (a) {
 	return {$: 'ToggleExtraTime', a: a};
@@ -12775,8 +12816,10 @@ var $author$project$TestTimer$content = function (btn) {
 			return $author$project$Button$icon.pause;
 		case 'Stop':
 			return $author$project$Button$icon.stop;
-		default:
+		case 'Go':
 			return $author$project$Button$icon.play;
+		default:
+			return $author$project$Button$icon.edit;
 	}
 };
 var $author$project$Size$button = {large: 40, normal: 20, small: 8};
@@ -14861,7 +14904,10 @@ var $author$project$TestTimer$viewTestBeingAdded = F2(
 								$author$project$TestTimer$Text,
 								A2(
 									$elm$core$Maybe$map,
-									A2($elm$core$Basics$composeL, $author$project$TestTimer$NewTest, $author$project$TestTimer$SaveTest),
+									A2(
+										$elm$core$Basics$composeL,
+										$author$project$TestTimer$NewTest,
+										$author$project$TestTimer$SaveTest(newTest.replaces)),
 									A2($author$project$TestTimer$makeTests, model, newTest))),
 								A3(
 								$author$project$TestTimer$button,
@@ -14871,6 +14917,15 @@ var $author$project$TestTimer$viewTestBeingAdded = F2(
 									$author$project$TestTimer$NewTest($author$project$TestTimer$CancelNewTest)))
 							]))
 					]));
+		}
+	});
+var $elm$core$Maybe$andThen = F2(
+	function (callback, maybeValue) {
+		if (maybeValue.$ === 'Just') {
+			var value = maybeValue.a;
+			return callback(value);
+		} else {
+			return $elm$core$Maybe$Nothing;
 		}
 	});
 var $author$project$TestTimer$Delete = {$: 'Delete'};
@@ -14900,6 +14955,20 @@ var $author$project$TestTimer$duplicateButton = F2(
 			$author$project$TestTimer$Small,
 			$elm$core$Maybe$Just(
 				$author$project$TestTimer$CopyTest(existingTest)));
+	});
+var $author$project$TestTimer$Edit = {$: 'Edit'};
+var $author$project$TestTimer$EditTest = F2(
+	function (a, b) {
+		return {$: 'EditTest', a: a, b: b};
+	});
+var $author$project$TestTimer$editButton = F2(
+	function (index, existingTest) {
+		return A3(
+			$author$project$TestTimer$button,
+			$author$project$TestTimer$Edit,
+			$author$project$TestTimer$Small,
+			$elm$core$Maybe$Just(
+				A2($author$project$TestTimer$EditTest, index, existingTest)));
 	});
 var $author$project$TestTimer$ifNotCurrentlyEditing = F4(
 	function (model, viewTest, index, test) {
@@ -15181,6 +15250,21 @@ var $author$project$TimeUtils$showTimeWithoutSeconds = F2(
 	});
 var $author$project$TestTimer$viewTests = F2(
 	function (model, tests) {
+		var blankIfBeingEdited = F2(
+			function (index, contentIfNotBeingEdited) {
+				var _v0 = A2(
+					$elm$core$Maybe$andThen,
+					function ($) {
+						return $.replaces;
+					},
+					model.newTest);
+				if (_v0.$ === 'Nothing') {
+					return contentIfNotBeingEdited;
+				} else {
+					var i = _v0.a;
+					return _Utils_eq(i, index) ? $mdgriffith$elm_ui$Element$none : contentIfNotBeingEdited;
+				}
+			});
 		return A2(
 			$mdgriffith$elm_ui$Element$indexedTable,
 			_List_fromArray(
@@ -15191,56 +15275,73 @@ var $author$project$TestTimer$viewTests = F2(
 						{
 						header: $mdgriffith$elm_ui$Element$none,
 						view: F2(
-							function (_v0, test) {
-								return $author$project$TestTimer$showStatus(
-									A2($author$project$TestTimer$status, model, test));
+							function (i, test) {
+								return A2(
+									blankIfBeingEdited,
+									i,
+									$author$project$TestTimer$showStatus(
+										A2($author$project$TestTimer$status, model, test)));
 							}),
 						width: $mdgriffith$elm_ui$Element$shrink
 					},
 						{
 						header: $mdgriffith$elm_ui$Element$text('Test'),
 						view: F2(
-							function (_v1, test) {
+							function (i, test) {
 								return A2(
-									$mdgriffith$elm_ui$Element$el,
-									_List_fromArray(
-										[$mdgriffith$elm_ui$Element$centerY]),
-									$mdgriffith$elm_ui$Element$text(test.name));
+									blankIfBeingEdited,
+									i,
+									A2(
+										$mdgriffith$elm_ui$Element$el,
+										_List_fromArray(
+											[$mdgriffith$elm_ui$Element$centerY]),
+										$mdgriffith$elm_ui$Element$text(test.name)));
 							}),
 						width: $mdgriffith$elm_ui$Element$shrink
 					},
 						{
 						header: $mdgriffith$elm_ui$Element$text('Start'),
 						view: F2(
-							function (_v2, test) {
+							function (i, test) {
 								return A2(
-									$mdgriffith$elm_ui$Element$el,
-									_List_fromArray(
-										[$mdgriffith$elm_ui$Element$centerY]),
-									$mdgriffith$elm_ui$Element$text(
-										A2($author$project$TimeUtils$showTimeWithoutSeconds, model.timeZone, test.startTime)));
+									blankIfBeingEdited,
+									i,
+									A2(
+										$mdgriffith$elm_ui$Element$el,
+										_List_fromArray(
+											[$mdgriffith$elm_ui$Element$centerY]),
+										$mdgriffith$elm_ui$Element$text(
+											A2($author$project$TimeUtils$showTimeWithoutSeconds, model.timeZone, test.startTime))));
 							}),
 						width: $mdgriffith$elm_ui$Element$shrink
 					},
 						{
 						header: $mdgriffith$elm_ui$Element$text('Finish'),
 						view: F2(
-							function (_v3, test) {
+							function (i, test) {
 								return A2(
-									$mdgriffith$elm_ui$Element$el,
-									_List_fromArray(
-										[$mdgriffith$elm_ui$Element$centerY]),
-									$mdgriffith$elm_ui$Element$text(
-										A2(
-											$author$project$TimeUtils$showTimeWithoutSeconds,
-											model.timeZone,
-											$author$project$TestTimer$finishTime(test))));
+									blankIfBeingEdited,
+									i,
+									A2(
+										$mdgriffith$elm_ui$Element$el,
+										_List_fromArray(
+											[$mdgriffith$elm_ui$Element$centerY]),
+										$mdgriffith$elm_ui$Element$text(
+											A2(
+												$author$project$TimeUtils$showTimeWithoutSeconds,
+												model.timeZone,
+												$author$project$TestTimer$finishTime(test)))));
 							}),
 						width: $mdgriffith$elm_ui$Element$shrink
 					},
 						{
 						header: $mdgriffith$elm_ui$Element$none,
 						view: A2($author$project$TestTimer$ifNotCurrentlyEditing, model, $author$project$TestTimer$duplicateButton),
+						width: $mdgriffith$elm_ui$Element$shrink
+					},
+						{
+						header: $mdgriffith$elm_ui$Element$none,
+						view: A2($author$project$TestTimer$ifNotCurrentlyEditing, model, $author$project$TestTimer$editButton),
 						width: $mdgriffith$elm_ui$Element$shrink
 					},
 						{

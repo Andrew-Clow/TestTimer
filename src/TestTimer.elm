@@ -34,6 +34,7 @@ type Msg
     | InitialiseTime Time.Posix
     | NewTest TestEditing
     | CopyTest Test
+    | EditTest Int Test
     | UndoLast
     | RedoLast
     | DeleteTest Int
@@ -46,7 +47,7 @@ type TestEditing
     | EditedStartMinutes (Maybe Int)
     | EditedLength (Maybe Int)
     | ToggleExtraTime Bool
-    | SaveTest (List Test)
+    | SaveTest (Maybe Int) (List Test)
     | CancelNewTest
 
 
@@ -93,6 +94,22 @@ type alias NewTestUnderEditing =
     , startMinutes : Maybe Int
     , length : Maybe Int
     , addExtraTimeToo : Bool
+    , replaces : Maybe Int
+    }
+
+
+editingTest : { r | timeZone : Time.Zone, currentTime : Time.Posix } -> Int -> Test -> NewTestUnderEditing
+editingTest model index test =
+    let
+        hms =
+            TimeUtils.posixToHMS model.timeZone test.startTime
+    in
+    { name = test.name
+    , startHours = Just hms.hours
+    , startMinutes = Just hms.minutes
+    , length = Just test.lengthInMinutes
+    , addExtraTimeToo = False
+    , replaces = Just index
     }
 
 
@@ -107,6 +124,7 @@ duplicateTest model test =
     , startMinutes = Just hms.minutes
     , length = Just test.lengthInMinutes
     , addExtraTimeToo = False
+    , replaces = Nothing
     }
 
 
@@ -208,6 +226,7 @@ defaultTest model =
     , startMinutes = Just <| Time.toMinute model.timeZone startTime
     , length = Just 60
     , addExtraTimeToo = True
+    , replaces = Nothing
     }
 
 
@@ -275,6 +294,14 @@ update msg model =
                         Just _ ->
                             model
 
+                EditTest index test ->
+                    case model.newTest of
+                        Nothing ->
+                            { model | newTest = Just (editingTest model index test) }
+
+                        Just _ ->
+                            model
+
                 DeleteTest index ->
                     updateTests model (deleteAt index)
 
@@ -338,9 +365,18 @@ asNewTestIn m t =
     { m | newTest = Just t }
 
 
-incorporateTestsAndCancelNewTest : List Test -> Model -> Model
-incorporateTestsAndCancelNewTest newTests model =
-    updateTests { model | newTest = Nothing } ((++) newTests >> sortTests)
+incorporateTestsAndCancelNewTest : Maybe Int -> List Test -> Model -> Model
+incorporateTestsAndCancelNewTest replaces newTests model =
+    let
+        remove =
+            case replaces of
+                Nothing ->
+                    identity
+
+                Just index ->
+                    deleteAt index
+    in
+    updateTests { model | newTest = Nothing } (remove >> (++) newTests >> sortTests)
 
 
 
@@ -370,8 +406,8 @@ updateNewTest msg model =
                 ToggleExtraTime et ->
                     { newTest | addExtraTimeToo = et } |> asNewTestIn model
 
-                SaveTest newTests ->
-                    incorporateTestsAndCancelNewTest newTests model
+                SaveTest replaces newTests ->
+                    incorporateTestsAndCancelNewTest replaces newTests model
 
                 CancelNewTest ->
                     { model | newTest = Nothing }
@@ -417,6 +453,20 @@ view model =
 
 viewTests : { r | timeZone : Time.Zone, newTest : Maybe NewTestUnderEditing, currentTime : Time.Posix } -> List Test -> Element Msg
 viewTests model tests =
+    let
+        blankIfBeingEdited : Int -> Element msg -> Element msg
+        blankIfBeingEdited index contentIfNotBeingEdited =
+            case model.newTest |> Maybe.andThen .replaces of
+                Nothing ->
+                    contentIfNotBeingEdited
+
+                Just i ->
+                    if i == index then
+                        Element.none
+
+                    else
+                        contentIfNotBeingEdited
+    in
     Element.indexedTable
         [ Size.spacing.large
         , Size.fontSize.huge
@@ -425,35 +475,42 @@ viewTests model tests =
         , columns =
             [ { header = Element.none
               , width = Element.shrink
-              , view = \_ test -> test |> status model |> showStatus
+              , view = \i test -> blankIfBeingEdited i (test |> status model |> showStatus)
               }
             , { header = Element.text "Test"
               , width = Element.shrink
               , view =
-                    \_ test ->
-                        Element.el [ Element.centerY ] <|
-                            Element.text test.name
+                    \i test ->
+                        blankIfBeingEdited i <|
+                            Element.el [ Element.centerY ] <|
+                                Element.text test.name
               }
             , { header = Element.text "Start"
               , width = Element.shrink
               , view =
-                    \_ test ->
-                        Element.el [ Element.centerY ] <|
-                            Element.text <|
-                                TimeUtils.showTimeWithoutSeconds model.timeZone test.startTime
+                    \i test ->
+                        blankIfBeingEdited i <|
+                            Element.el [ Element.centerY ] <|
+                                Element.text <|
+                                    TimeUtils.showTimeWithoutSeconds model.timeZone test.startTime
               }
             , { header = Element.text "Finish"
               , width = Element.shrink
               , view =
-                    \_ test ->
-                        Element.el [ Element.centerY ] <|
-                            Element.text <|
-                                TimeUtils.showTimeWithoutSeconds model.timeZone <|
-                                    finishTime test
+                    \i test ->
+                        blankIfBeingEdited i <|
+                            Element.el [ Element.centerY ] <|
+                                Element.text <|
+                                    TimeUtils.showTimeWithoutSeconds model.timeZone <|
+                                        finishTime test
               }
             , { header = Element.none
               , width = Element.shrink
               , view = ifNotCurrentlyEditing model duplicateButton
+              }
+            , { header = Element.none
+              , width = Element.shrink
+              , view = ifNotCurrentlyEditing model editButton
               }
             , { header = Element.none
               , width = Element.shrink
@@ -476,6 +533,11 @@ ifNotCurrentlyEditing model viewTest index test =
 duplicateButton : Int -> Test -> Element Msg
 duplicateButton _ existingTest =
     button Copy Small (Just <| CopyTest existingTest)
+
+
+editButton : Int -> Test -> Element Msg
+editButton index existingTest =
+    button Edit Small (Just <| EditTest index existingTest)
 
 
 deleteButton : Int -> Test -> Element Msg
@@ -541,7 +603,7 @@ viewTestBeingAdded model mn =
                     , label = Element.Input.labelLeft [] <| Element.text "Add a version with extra time?"
                     }
                 , Element.row [ Size.spacing.normal ]
-                    [ button Save Text <| Maybe.map (NewTest << SaveTest) <| makeTests model newTest
+                    [ button Save Text <| Maybe.map (NewTest << SaveTest newTest.replaces) <| makeTests model newTest
                     , button Cancel Text <| Just <| NewTest CancelNewTest
                     ]
                 ]
@@ -619,6 +681,7 @@ type Button
     | Redo
     | Add
     | Copy
+    | Edit
     | Delete
     | Save
     | Cancel
@@ -659,6 +722,9 @@ content btn =
 
         Go ->
             Button.icon.play
+
+        Edit ->
+            Button.icon.edit
 
 
 button : Button -> ButtonStyle -> Maybe msg -> Element msg
