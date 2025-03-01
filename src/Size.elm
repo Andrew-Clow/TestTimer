@@ -71,7 +71,7 @@ fontSize =
     { normal = Font.size 10
     , large = Font.size 16
     , huge = Font.size 24
-    , enormous = Font.size 200
+    , enormous = Font.size 100
     }
 
 

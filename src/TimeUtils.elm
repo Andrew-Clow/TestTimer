@@ -186,7 +186,35 @@ timeZoneOffsetMillis zone =
 
 
 
--- Integer Input -------------------------------------------------------------------------------------------------------
+-- String Integer Input -------------------------------------------------------------------------------------------------------
+
+
+decButStayPositive : String -> String
+decButStayPositive string =
+    case string |> String.toInt of
+        Nothing ->
+            "00"
+
+        Just n ->
+            if n < 1 then
+                "00"
+
+            else
+                n - 1 |> String.fromInt
+
+
+incButStayBelow : Int -> String -> String
+incButStayBelow max string =
+    case string |> String.toInt of
+        Nothing ->
+            "0"
+
+        Just n ->
+            let
+                new =
+                    min (n + 1) max
+            in
+            new |> String.fromInt
 
 
 positiveIntegerBelow : Int -> String -> Maybe Int

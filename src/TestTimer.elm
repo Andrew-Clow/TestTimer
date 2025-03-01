@@ -6,6 +6,7 @@ import Button exposing (Content(..))
 import Colour
 import Element exposing (Element)
 import Element.Input
+import HHMM exposing (HHMM(..))
 import Html exposing (Html)
 import Size
 import Task
@@ -35,6 +36,7 @@ type Msg
     | NewTest TestEditing
     | CopyTest Test
     | EditTest Int Test
+    | ToggledDigitalView Bool
     | UndoLast
     | RedoLast
     | DeleteTest Int
@@ -45,8 +47,9 @@ type TestEditing
     = TypedName String
     | EditedStartHours String
     | EditedStartMinutes String
+    | EditedStartTime (HHMM String)
     | EditedLength String
-    | ToggleExtraTime Bool
+    | ToggledExtraTime Bool
     | SaveTest (Maybe Int) (List Test)
     | CancelNewTest
 
@@ -60,6 +63,7 @@ type alias Model =
     , currentTime : Time.Posix
     , tests : UndoList (List Test)
     , newTest : Maybe NewTestUnderEditing
+    , showDigitalToo : Bool
     }
 
 
@@ -90,8 +94,7 @@ type TestStatus
 
 type alias NewTestUnderEditing =
     { name : String
-    , startHours : String
-    , startMinutes : String
+    , start : HHMM String
     , length : String
     , addExtraTimeToo : Bool
     , replaces : Maybe Int
@@ -100,13 +103,8 @@ type alias NewTestUnderEditing =
 
 editingTest : { r | timeZone : Time.Zone, currentTime : Time.Posix } -> Int -> Test -> NewTestUnderEditing
 editingTest model index test =
-    let
-        hms =
-            TimeUtils.posixToHMS model.timeZone test.startTime
-    in
     { name = test.name
-    , startHours = hms.hours |> String.fromInt
-    , startMinutes = hms.minutes |> String.fromInt
+    , start = HHMM.fromPosix model.timeZone test.startTime |> HHMM.toStrings
     , length = test.lengthInMinutes |> String.fromInt
     , addExtraTimeToo = False
     , replaces = Just index
@@ -115,13 +113,8 @@ editingTest model index test =
 
 duplicateTest : { r | timeZone : Time.Zone, currentTime : Time.Posix } -> Test -> NewTestUnderEditing
 duplicateTest model test =
-    let
-        hms =
-            TimeUtils.posixToHMS model.timeZone <| afterMinutes 1 model
-    in
     { name = test.name
-    , startHours = hms.hours |> String.fromInt
-    , startMinutes = hms.minutes |> String.fromInt
+    , start = HHMM.fromPosix model.timeZone test.startTime |> HHMM.toStrings
     , length = test.lengthInMinutes |> String.fromInt
     , addExtraTimeToo = False
     , replaces = Nothing
@@ -181,9 +174,9 @@ sortTests =
 
 
 makeTests : TimeData r -> NewTestUnderEditing -> Maybe (List Test)
-makeTests timeData { name, startHours, startMinutes, length, addExtraTimeToo } =
-    case ( startHours |> String.toInt, startMinutes |> String.toInt, length |> String.toInt ) of
-        ( Just h, Just m, Just l ) ->
+makeTests timeData { name, start, length, addExtraTimeToo } =
+    case ( start |> HHMM.toInts, length |> String.toInt ) of
+        ( Just (HHMM h m), Just l ) ->
             if name == "" then
                 Nothing
 
@@ -194,8 +187,6 @@ makeTests timeData { name, startHours, startMinutes, length, addExtraTimeToo } =
                             { name = name
                             , startTime =
                                 setTimeToday timeData.timeZone timeData.currentTime h m
-
-                            --TimeUtils.hmsToPosix timeData.timeZone { hours = h, minutes = m, seconds = 0 }
                             , lengthInMinutes = l
                             , status = Nothing
                             }
@@ -217,13 +208,8 @@ afterMinutes n model =
 
 defaultTest : { r | currentTime : Time.Posix, timeZone : Time.Zone } -> NewTestUnderEditing
 defaultTest model =
-    let
-        startTime =
-            afterMinutes 0 model
-    in
     { name = "Maths"
-    , startHours = Time.toHour model.timeZone startTime |> String.fromInt
-    , startMinutes = Time.toMinute model.timeZone startTime |> String.fromInt
+    , start = HHMM.fromPosix model.timeZone model.currentTime |> HHMM.toStrings
     , length = "60"
     , addExtraTimeToo = True
     , replaces = Nothing
@@ -242,6 +228,7 @@ init _ =
             , currentTime = Time.millisToPosix 0
             , tests = UndoList.fresh []
             , newTest = Nothing
+            , showDigitalToo = False
             }
     in
     ( model
@@ -310,6 +297,9 @@ update msg model =
 
                 RedoLast ->
                     { model | tests = model.tests |> UndoList.redo }
+
+                ToggledDigitalView bool ->
+                    { model | showDigitalToo = bool }
     in
     ( newModel, Cmd.none )
 
@@ -379,10 +369,6 @@ incorporateTestsAndCancelNewTest replaces newTests model =
     updateTests { model | newTest = Nothing } (remove >> (++) newTests >> sortTests)
 
 
-
---{ model | tests = sortTests <| model.tests ++ newTests, newTest = Nothing }
-
-
 updateNewTest : TestEditing -> Model -> Model
 updateNewTest msg model =
     case model.newTest of
@@ -394,16 +380,19 @@ updateNewTest msg model =
                 TypedName string ->
                     { newTest | name = string } |> asNewTestIn model
 
+                EditedStartTime hhmm ->
+                    { newTest | start = hhmm } |> asNewTestIn model
+
                 EditedStartHours sh ->
-                    { newTest | startHours = sh } |> asNewTestIn model
+                    { newTest | start = HHMM sh (HHMM.minutes newTest.start) } |> asNewTestIn model
 
                 EditedStartMinutes sm ->
-                    { newTest | startMinutes = sm } |> asNewTestIn model
+                    { newTest | start = HHMM (HHMM.hours newTest.start) sm } |> asNewTestIn model
 
                 EditedLength maybeInt ->
                     { newTest | length = maybeInt } |> asNewTestIn model
 
-                ToggleExtraTime et ->
+                ToggledExtraTime et ->
                     { newTest | addExtraTimeToo = et } |> asNewTestIn model
 
                 SaveTest replaces newTests ->
@@ -428,25 +417,30 @@ subscriptions _ =
 
 view : Model -> Html Msg
 view model =
+    let
+        digitalDisplay =
+            if model.showDigitalToo then
+                Element.el [ Size.fontSize.enormous, Element.centerX ] <|
+                    Element.text <|
+                        TimeUtils.showTimeWithSeconds model.timeZone model.currentTime
+
+            else
+                Element.none
+    in
     Element.layout
         [ Size.padding.large
         , Element.width Element.fill
         ]
     <|
-        Element.column
-            [ Size.spacing.large
-            ]
-            [ Element.row [ Element.width <| Element.px 1100 ]
-                [ Element.el [ Size.fontSize.enormous, Element.centerX ] <|
-                    Element.text <|
-                        TimeUtils.showTimeWithSeconds model.timeZone model.currentTime
-                ]
-            , Element.row [ Element.width Element.fill ]
+        Element.row [ Element.width Element.fill ]
+            [ Element.column
+                [ Size.spacing.large, Element.alignTop ]
                 [ AnalogClock.view model
-                , Element.column [ Size.spacing.large ]
-                    [ viewTests model <| model.tests.present
-                    , viewTestBeingAdded model model.newTest
-                    ]
+                , digitalDisplay
+                ]
+            , Element.column [ Size.spacing.large ]
+                [ viewTests model <| model.tests.present
+                , viewTestBeingAdded model model.newTest
                 ]
             ]
 
@@ -462,7 +456,7 @@ viewTests model tests =
 
                 Just i ->
                     if i == index then
-                        Element.none
+                        Element.text "-"
 
                     else
                         contentIfNotBeingEdited
@@ -585,22 +579,42 @@ viewTestBeingAdded model mn =
                     }
                 , Element.row []
                     [ Element.text "Start time: "
+                    , Element.column []
+                        [ button Up Small (Just <| NewTest <| EditedStartTime <| HHMM.addString (HHMM 1 0) <| newTest.start)
+                        , button Down Small (Just <| NewTest <| EditedStartTime <| HHMM.addString (HHMM -1 0) <| newTest.start)
+                        ]
                     , Element.map (NewTest << EditedStartHours) <|
-                        TimeUtils.textPositiveIntegerBelow 24 [ twoDigitWidth ] newTest.startHours
+                        TimeUtils.textPositiveIntegerBelow 24 [ twoDigitWidth ] <|
+                            HHMM.hours newTest.start
                     , Element.text " : "
                     , Element.map (NewTest << EditedStartMinutes) <|
-                        TimeUtils.textPositiveIntegerBelow 60 [ twoDigitWidth ] newTest.startMinutes
+                        TimeUtils.textPositiveIntegerBelow 60 [ twoDigitWidth ] <|
+                            HHMM.minutes newTest.start
+                    , Element.column []
+                        [ button Up Small (Just <| NewTest <| EditedStartTime <| HHMM.addString (HHMM 0 1) <| newTest.start)
+                        , button Down Small (Just <| NewTest <| EditedStartTime <| HHMM.addString (HHMM 0 -1) <| newTest.start)
+                        ]
                     ]
                 , Element.row []
                     [ Element.text "Length: "
                     , Element.map (NewTest << EditedLength) <|
                         TimeUtils.textPositiveIntegerBelow (24 * 60) [ threeDigitWidth ] newTest.length
+                    , Element.column []
+                        [ button Up Small (Just <| NewTest <| EditedLength <| TimeUtils.incButStayBelow (24 * 60) newTest.length)
+                        , button Down Small (Just <| NewTest <| EditedLength <| TimeUtils.decButStayPositive newTest.length)
+                        ]
                     ]
                 , Element.Input.checkbox []
-                    { onChange = NewTest << ToggleExtraTime
+                    { onChange = NewTest << ToggledExtraTime
                     , icon = Element.Input.defaultCheckbox
                     , checked = newTest.addExtraTimeToo
                     , label = Element.Input.labelLeft [] <| Element.text "Add a version with extra time?"
+                    }
+                , Element.Input.checkbox []
+                    { onChange = ToggledDigitalView
+                    , icon = Element.Input.defaultCheckbox
+                    , checked = model.showDigitalToo
+                    , label = Element.Input.labelLeft [] <| Element.text "Show Digital clock too?"
                     }
                 , Element.row [ Size.spacing.normal ]
                     [ button Save Text <| Maybe.map (NewTest << SaveTest newTest.replaces) <| makeTests model newTest
@@ -688,6 +702,8 @@ type Button
     | Pause
     | Stop
     | Go
+    | Up
+    | Down
 
 
 content : Button -> Button.Content msg
@@ -725,6 +741,12 @@ content btn =
 
         Edit ->
             Button.icon.edit
+
+        Up ->
+            Button.icon.inc
+
+        Down ->
+            Button.icon.dec
 
 
 button : Button -> ButtonStyle -> Maybe msg -> Element msg

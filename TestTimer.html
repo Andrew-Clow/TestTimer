@@ -5292,6 +5292,7 @@ var $author$project$TestTimer$init = function (_v0) {
 	var model = {
 		currentTime: $elm$time$Time$millisToPosix(0),
 		newTest: $elm$core$Maybe$Nothing,
+		showDigitalToo: false,
 		tests: $elm_community$undo_redo$UndoList$fresh(_List_Nil),
 		timeZone: $elm$time$Time$utc
 	};
@@ -5782,15 +5783,15 @@ var $elm$time$Time$toMinute = F2(
 			A2($elm$time$Time$toAdjustedMinutes, zone, time));
 	});
 var $author$project$TestTimer$defaultTest = function (model) {
-	var startTime = A2($author$project$TestTimer$afterMinutes, 5, model);
+	var startTime = A2($author$project$TestTimer$afterMinutes, 0, model);
 	return {
 		addExtraTimeToo: true,
-		length: $elm$core$Maybe$Just(60),
-		name: '',
+		length: '60',
+		name: 'Maths',
 		replaces: $elm$core$Maybe$Nothing,
-		startHours: $elm$core$Maybe$Just(
+		startHours: $elm$core$String$fromInt(
 			A2($elm$time$Time$toHour, model.timeZone, startTime)),
-		startMinutes: $elm$core$Maybe$Just(
+		startMinutes: $elm$core$String$fromInt(
 			A2($elm$time$Time$toMinute, model.timeZone, startTime))
 	};
 };
@@ -5973,11 +5974,11 @@ var $author$project$TestTimer$duplicateTest = F2(
 			A2($author$project$TestTimer$afterMinutes, 1, model));
 		return {
 			addExtraTimeToo: false,
-			length: $elm$core$Maybe$Just(test.lengthInMinutes),
+			length: $elm$core$String$fromInt(test.lengthInMinutes),
 			name: test.name,
 			replaces: $elm$core$Maybe$Nothing,
-			startHours: $elm$core$Maybe$Just(hms.hours),
-			startMinutes: $elm$core$Maybe$Just(hms.minutes)
+			startHours: $elm$core$String$fromInt(hms.hours),
+			startMinutes: $elm$core$String$fromInt(hms.minutes)
 		};
 	});
 var $author$project$TestTimer$editingTest = F3(
@@ -5985,11 +5986,11 @@ var $author$project$TestTimer$editingTest = F3(
 		var hms = A2($author$project$TimeUtils$posixToHMS, model.timeZone, test.startTime);
 		return {
 			addExtraTimeToo: false,
-			length: $elm$core$Maybe$Just(test.lengthInMinutes),
+			length: $elm$core$String$fromInt(test.lengthInMinutes),
 			name: test.name,
 			replaces: $elm$core$Maybe$Just(index),
-			startHours: $elm$core$Maybe$Just(hms.hours),
-			startMinutes: $elm$core$Maybe$Just(hms.minutes)
+			startHours: $elm$core$String$fromInt(hms.hours),
+			startMinutes: $elm$core$String$fromInt(hms.minutes)
 		};
 	});
 var $elm_community$undo_redo$UndoList$mapPresent = F2(
@@ -6166,7 +6167,7 @@ var $author$project$TestTimer$updateNewTest = F2(
 						_Utils_update(
 							newTest,
 							{length: maybeInt}));
-				case 'ToggleExtraTime':
+				case 'ToggledExtraTime':
 					var et = msg.a;
 					return A2(
 						$author$project$TestTimer$asNewTestIn,
@@ -6285,12 +6286,17 @@ var $author$project$TestTimer$update = F2(
 						{
 							tests: $elm_community$undo_redo$UndoList$undo(model.tests)
 						});
-				default:
+				case 'RedoLast':
 					return _Utils_update(
 						model,
 						{
 							tests: $elm_community$undo_redo$UndoList$redo(model.tests)
 						});
+				default:
+					var bool = msg.a;
+					return _Utils_update(
+						model,
+						{showDigitalToo: bool});
 			}
 		}();
 		return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
@@ -12115,6 +12121,8 @@ var $mdgriffith$elm_ui$Element$layoutWith = F3(
 	});
 var $mdgriffith$elm_ui$Element$layout = $mdgriffith$elm_ui$Element$layoutWith(
 	{options: _List_Nil});
+var $mdgriffith$elm_ui$Internal$Model$Empty = {$: 'Empty'};
+var $mdgriffith$elm_ui$Element$none = $mdgriffith$elm_ui$Internal$Model$Empty;
 var $mdgriffith$elm_ui$Internal$Model$PaddingStyle = F5(
 	function (a, b, c, d, e) {
 		return {$: 'PaddingStyle', a: a, b: b, c: c, d: d, e: e};
@@ -12442,8 +12450,11 @@ var $author$project$TestTimer$SaveTest = F2(
 		return {$: 'SaveTest', a: a, b: b};
 	});
 var $author$project$TestTimer$Text = {$: 'Text'};
-var $author$project$TestTimer$ToggleExtraTime = function (a) {
-	return {$: 'ToggleExtraTime', a: a};
+var $author$project$TestTimer$ToggledDigitalView = function (a) {
+	return {$: 'ToggledDigitalView', a: a};
+};
+var $author$project$TestTimer$ToggledExtraTime = function (a) {
+	return {$: 'ToggledExtraTime', a: a};
 };
 var $author$project$TestTimer$TypedName = function (a) {
 	return {$: 'TypedName', a: a};
@@ -13086,7 +13097,6 @@ var $mdgriffith$elm_ui$Internal$Model$TransformComponent = F2(
 	function (a, b) {
 		return {$: 'TransformComponent', a: a, b: b};
 	});
-var $mdgriffith$elm_ui$Internal$Model$Empty = {$: 'Empty'};
 var $elm$virtual_dom$VirtualDom$map = _VirtualDom_map;
 var $mdgriffith$elm_ui$Internal$Model$map = F2(
 	function (fn, el) {
@@ -13496,7 +13506,6 @@ var $mdgriffith$elm_ui$Element$moveUp = function (y) {
 		$mdgriffith$elm_ui$Internal$Flag$moveY,
 		$mdgriffith$elm_ui$Internal$Model$MoveY(-y));
 };
-var $mdgriffith$elm_ui$Element$none = $mdgriffith$elm_ui$Internal$Model$Empty;
 var $mdgriffith$elm_ui$Element$rgba = $mdgriffith$elm_ui$Internal$Model$Rgba;
 var $mdgriffith$elm_ui$Internal$Model$Rotate = F2(
 	function (a, b) {
@@ -13663,10 +13672,322 @@ var $author$project$TestTimer$ifTrueJust = F2(
 	function (a, _true) {
 		return _true ? $elm$core$Maybe$Just(a) : $elm$core$Maybe$Nothing;
 	});
-var $mdgriffith$elm_ui$Element$Input$HiddenLabel = function (a) {
-	return {$: 'HiddenLabel', a: a};
+var $mdgriffith$elm_ui$Element$Input$Label = F3(
+	function (a, b, c) {
+		return {$: 'Label', a: a, b: b, c: c};
+	});
+var $mdgriffith$elm_ui$Element$Input$OnLeft = {$: 'OnLeft'};
+var $mdgriffith$elm_ui$Element$Input$labelLeft = $mdgriffith$elm_ui$Element$Input$Label($mdgriffith$elm_ui$Element$Input$OnLeft);
+var $author$project$TestTimer$extraTimeVersion = function (test) {
+	return {
+		lengthInMinutes: $elm$core$Basics$ceiling(test.lengthInMinutes * 1.25),
+		name: test.name + ' (extra time)',
+		startTime: test.startTime,
+		status: $elm$core$Maybe$Nothing
+	};
 };
-var $mdgriffith$elm_ui$Element$Input$labelHidden = $mdgriffith$elm_ui$Element$Input$HiddenLabel;
+var $elm$core$Basics$clamp = F3(
+	function (low, high, number) {
+		return (_Utils_cmp(number, low) < 0) ? low : ((_Utils_cmp(number, high) > 0) ? high : number);
+	});
+var $justinmimbs$date$Date$RD = function (a) {
+	return {$: 'RD', a: a};
+};
+var $justinmimbs$date$Date$isLeapYear = function (y) {
+	return ((!A2($elm$core$Basics$modBy, 4, y)) && (!(!A2($elm$core$Basics$modBy, 100, y)))) || (!A2($elm$core$Basics$modBy, 400, y));
+};
+var $justinmimbs$date$Date$daysBeforeMonth = F2(
+	function (y, m) {
+		var leapDays = $justinmimbs$date$Date$isLeapYear(y) ? 1 : 0;
+		switch (m.$) {
+			case 'Jan':
+				return 0;
+			case 'Feb':
+				return 31;
+			case 'Mar':
+				return 59 + leapDays;
+			case 'Apr':
+				return 90 + leapDays;
+			case 'May':
+				return 120 + leapDays;
+			case 'Jun':
+				return 151 + leapDays;
+			case 'Jul':
+				return 181 + leapDays;
+			case 'Aug':
+				return 212 + leapDays;
+			case 'Sep':
+				return 243 + leapDays;
+			case 'Oct':
+				return 273 + leapDays;
+			case 'Nov':
+				return 304 + leapDays;
+			default:
+				return 334 + leapDays;
+		}
+	});
+var $justinmimbs$date$Date$floorDiv = F2(
+	function (a, b) {
+		return $elm$core$Basics$floor(a / b);
+	});
+var $justinmimbs$date$Date$daysBeforeYear = function (y1) {
+	var y = y1 - 1;
+	var leapYears = (A2($justinmimbs$date$Date$floorDiv, y, 4) - A2($justinmimbs$date$Date$floorDiv, y, 100)) + A2($justinmimbs$date$Date$floorDiv, y, 400);
+	return (365 * y) + leapYears;
+};
+var $justinmimbs$date$Date$daysInMonth = F2(
+	function (y, m) {
+		switch (m.$) {
+			case 'Jan':
+				return 31;
+			case 'Feb':
+				return $justinmimbs$date$Date$isLeapYear(y) ? 29 : 28;
+			case 'Mar':
+				return 31;
+			case 'Apr':
+				return 30;
+			case 'May':
+				return 31;
+			case 'Jun':
+				return 30;
+			case 'Jul':
+				return 31;
+			case 'Aug':
+				return 31;
+			case 'Sep':
+				return 30;
+			case 'Oct':
+				return 31;
+			case 'Nov':
+				return 30;
+			default:
+				return 31;
+		}
+	});
+var $justinmimbs$date$Date$fromCalendarDate = F3(
+	function (y, m, d) {
+		return $justinmimbs$date$Date$RD(
+			($justinmimbs$date$Date$daysBeforeYear(y) + A2($justinmimbs$date$Date$daysBeforeMonth, y, m)) + A3(
+				$elm$core$Basics$clamp,
+				1,
+				A2($justinmimbs$date$Date$daysInMonth, y, m),
+				d));
+	});
+var $justinmimbs$date$Date$toRataDie = function (_v0) {
+	var rd = _v0.a;
+	return rd;
+};
+var $justinmimbs$time_extra$Time$Extra$dateToMillis = function (date) {
+	var daysSinceEpoch = $justinmimbs$date$Date$toRataDie(date) - 719163;
+	return daysSinceEpoch * 86400000;
+};
+var $elm$time$Time$toCivil = function (minutes) {
+	var rawDay = A2($elm$time$Time$flooredDiv, minutes, 60 * 24) + 719468;
+	var era = (((rawDay >= 0) ? rawDay : (rawDay - 146096)) / 146097) | 0;
+	var dayOfEra = rawDay - (era * 146097);
+	var yearOfEra = ((((dayOfEra - ((dayOfEra / 1460) | 0)) + ((dayOfEra / 36524) | 0)) - ((dayOfEra / 146096) | 0)) / 365) | 0;
+	var dayOfYear = dayOfEra - (((365 * yearOfEra) + ((yearOfEra / 4) | 0)) - ((yearOfEra / 100) | 0));
+	var mp = (((5 * dayOfYear) + 2) / 153) | 0;
+	var month = mp + ((mp < 10) ? 3 : (-9));
+	var year = yearOfEra + (era * 400);
+	return {
+		day: (dayOfYear - ((((153 * mp) + 2) / 5) | 0)) + 1,
+		month: month,
+		year: year + ((month <= 2) ? 1 : 0)
+	};
+};
+var $elm$time$Time$toDay = F2(
+	function (zone, time) {
+		return $elm$time$Time$toCivil(
+			A2($elm$time$Time$toAdjustedMinutes, zone, time)).day;
+	});
+var $elm$time$Time$Apr = {$: 'Apr'};
+var $elm$time$Time$Aug = {$: 'Aug'};
+var $elm$time$Time$Dec = {$: 'Dec'};
+var $elm$time$Time$Feb = {$: 'Feb'};
+var $elm$time$Time$Jan = {$: 'Jan'};
+var $elm$time$Time$Jul = {$: 'Jul'};
+var $elm$time$Time$Jun = {$: 'Jun'};
+var $elm$time$Time$Mar = {$: 'Mar'};
+var $elm$time$Time$May = {$: 'May'};
+var $elm$time$Time$Nov = {$: 'Nov'};
+var $elm$time$Time$Oct = {$: 'Oct'};
+var $elm$time$Time$Sep = {$: 'Sep'};
+var $elm$time$Time$toMonth = F2(
+	function (zone, time) {
+		var _v0 = $elm$time$Time$toCivil(
+			A2($elm$time$Time$toAdjustedMinutes, zone, time)).month;
+		switch (_v0) {
+			case 1:
+				return $elm$time$Time$Jan;
+			case 2:
+				return $elm$time$Time$Feb;
+			case 3:
+				return $elm$time$Time$Mar;
+			case 4:
+				return $elm$time$Time$Apr;
+			case 5:
+				return $elm$time$Time$May;
+			case 6:
+				return $elm$time$Time$Jun;
+			case 7:
+				return $elm$time$Time$Jul;
+			case 8:
+				return $elm$time$Time$Aug;
+			case 9:
+				return $elm$time$Time$Sep;
+			case 10:
+				return $elm$time$Time$Oct;
+			case 11:
+				return $elm$time$Time$Nov;
+			default:
+				return $elm$time$Time$Dec;
+		}
+	});
+var $elm$time$Time$toYear = F2(
+	function (zone, time) {
+		return $elm$time$Time$toCivil(
+			A2($elm$time$Time$toAdjustedMinutes, zone, time)).year;
+	});
+var $justinmimbs$date$Date$fromPosix = F2(
+	function (zone, posix) {
+		return A3(
+			$justinmimbs$date$Date$fromCalendarDate,
+			A2($elm$time$Time$toYear, zone, posix),
+			A2($elm$time$Time$toMonth, zone, posix),
+			A2($elm$time$Time$toDay, zone, posix));
+	});
+var $justinmimbs$time_extra$Time$Extra$timeFromClock = F4(
+	function (hour, minute, second, millisecond) {
+		return (((hour * 3600000) + (minute * 60000)) + (second * 1000)) + millisecond;
+	});
+var $elm$time$Time$toMillis = F2(
+	function (_v0, time) {
+		return A2(
+			$elm$core$Basics$modBy,
+			1000,
+			$elm$time$Time$posixToMillis(time));
+	});
+var $justinmimbs$time_extra$Time$Extra$timeFromPosix = F2(
+	function (zone, posix) {
+		return A4(
+			$justinmimbs$time_extra$Time$Extra$timeFromClock,
+			A2($elm$time$Time$toHour, zone, posix),
+			A2($elm$time$Time$toMinute, zone, posix),
+			A2($elm$time$Time$toSecond, zone, posix),
+			A2($elm$time$Time$toMillis, zone, posix));
+	});
+var $justinmimbs$time_extra$Time$Extra$toOffset = F2(
+	function (zone, posix) {
+		var millis = $elm$time$Time$posixToMillis(posix);
+		var localMillis = $justinmimbs$time_extra$Time$Extra$dateToMillis(
+			A2($justinmimbs$date$Date$fromPosix, zone, posix)) + A2($justinmimbs$time_extra$Time$Extra$timeFromPosix, zone, posix);
+		return ((localMillis - millis) / 60000) | 0;
+	});
+var $justinmimbs$time_extra$Time$Extra$posixFromDateTime = F3(
+	function (zone, date, time) {
+		var millis = $justinmimbs$time_extra$Time$Extra$dateToMillis(date) + time;
+		var offset0 = A2(
+			$justinmimbs$time_extra$Time$Extra$toOffset,
+			zone,
+			$elm$time$Time$millisToPosix(millis));
+		var posix1 = $elm$time$Time$millisToPosix(millis - (offset0 * 60000));
+		var offset1 = A2($justinmimbs$time_extra$Time$Extra$toOffset, zone, posix1);
+		if (_Utils_eq(offset0, offset1)) {
+			return posix1;
+		} else {
+			var posix2 = $elm$time$Time$millisToPosix(millis - (offset1 * 60000));
+			var offset2 = A2($justinmimbs$time_extra$Time$Extra$toOffset, zone, posix2);
+			return _Utils_eq(offset1, offset2) ? posix2 : posix1;
+		}
+	});
+var $justinmimbs$time_extra$Time$Extra$partsToPosix = F2(
+	function (zone, _v0) {
+		var year = _v0.year;
+		var month = _v0.month;
+		var day = _v0.day;
+		var hour = _v0.hour;
+		var minute = _v0.minute;
+		var second = _v0.second;
+		var millisecond = _v0.millisecond;
+		return A3(
+			$justinmimbs$time_extra$Time$Extra$posixFromDateTime,
+			zone,
+			A3($justinmimbs$date$Date$fromCalendarDate, year, month, day),
+			A4(
+				$justinmimbs$time_extra$Time$Extra$timeFromClock,
+				A3($elm$core$Basics$clamp, 0, 23, hour),
+				A3($elm$core$Basics$clamp, 0, 59, minute),
+				A3($elm$core$Basics$clamp, 0, 59, second),
+				A3($elm$core$Basics$clamp, 0, 999, millisecond)));
+	});
+var $justinmimbs$time_extra$Time$Extra$posixToParts = F2(
+	function (zone, posix) {
+		return {
+			day: A2($elm$time$Time$toDay, zone, posix),
+			hour: A2($elm$time$Time$toHour, zone, posix),
+			millisecond: A2($elm$time$Time$toMillis, zone, posix),
+			minute: A2($elm$time$Time$toMinute, zone, posix),
+			month: A2($elm$time$Time$toMonth, zone, posix),
+			second: A2($elm$time$Time$toSecond, zone, posix),
+			year: A2($elm$time$Time$toYear, zone, posix)
+		};
+	});
+var $author$project$TestTimer$setTimeToday = F4(
+	function (zone, currentTime, hh, mm) {
+		var parts = A2($justinmimbs$time_extra$Time$Extra$posixToParts, zone, currentTime);
+		var newTime = _Utils_update(
+			parts,
+			{hour: hh, millisecond: 0, minute: mm, second: 0});
+		return A2($justinmimbs$time_extra$Time$Extra$partsToPosix, zone, newTime);
+	});
+var $author$project$TestTimer$makeTests = F2(
+	function (timeData, _v0) {
+		var name = _v0.name;
+		var startHours = _v0.startHours;
+		var startMinutes = _v0.startMinutes;
+		var length = _v0.length;
+		var addExtraTimeToo = _v0.addExtraTimeToo;
+		var _v1 = _Utils_Tuple3(
+			$elm$core$String$toInt(startHours),
+			$elm$core$String$toInt(startMinutes),
+			$elm$core$String$toInt(length));
+		if (((_v1.a.$ === 'Just') && (_v1.b.$ === 'Just')) && (_v1.c.$ === 'Just')) {
+			var h = _v1.a.a;
+			var m = _v1.b.a;
+			var l = _v1.c.a;
+			return (name === '') ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(
+				function () {
+					var test = {
+						lengthInMinutes: l,
+						name: name,
+						startTime: A4($author$project$TestTimer$setTimeToday, timeData.timeZone, timeData.currentTime, h, m),
+						status: $elm$core$Maybe$Nothing
+					};
+					return addExtraTimeToo ? _List_fromArray(
+						[
+							test,
+							$author$project$TestTimer$extraTimeVersion(test)
+						]) : _List_fromArray(
+						[test]);
+				}());
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $mdgriffith$elm_ui$Element$map = $mdgriffith$elm_ui$Internal$Model$map;
+var $mdgriffith$elm_ui$Element$Input$Placeholder = F2(
+	function (a, b) {
+		return {$: 'Placeholder', a: a, b: b};
+	});
+var $mdgriffith$elm_ui$Element$Input$placeholder = $mdgriffith$elm_ui$Element$Input$Placeholder;
+var $author$project$Size$placeholderText = function (string) {
+	return (string === '') ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(
+		A2(
+			$mdgriffith$elm_ui$Element$Input$placeholder,
+			_List_Nil,
+			$mdgriffith$elm_ui$Element$text(string)));
+};
 var $mdgriffith$elm_ui$Element$Input$TextInputNode = function (a) {
 	return {$: 'TextInputNode', a: a};
 };
@@ -14437,348 +14758,51 @@ var $mdgriffith$elm_ui$Element$Input$text = $mdgriffith$elm_ui$Element$Input$tex
 		spellchecked: false,
 		type_: $mdgriffith$elm_ui$Element$Input$TextInputNode('text')
 	});
-var $author$project$TimeUtils$inputPositiveIntegerBelow = F3(
+var $mdgriffith$elm_ui$Element$Input$HiddenLabel = function (a) {
+	return {$: 'HiddenLabel', a: a};
+};
+var $mdgriffith$elm_ui$Element$Input$labelHidden = $mdgriffith$elm_ui$Element$Input$HiddenLabel;
+var $author$project$TimeUtils$positiveIntegerBelow = F2(
+	function (max, string) {
+		var _v0 = $elm$core$String$toInt(string);
+		if (_v0.$ === 'Nothing') {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var n = _v0.a;
+			return ((0 <= n) && (_Utils_cmp(n, max) < 1)) ? $elm$core$Maybe$Just(n) : $elm$core$Maybe$Nothing;
+		}
+	});
+var $author$project$TimeUtils$positiveIntegerStringBelow = F2(
+	function (max, string) {
+		var _v0 = A2($author$project$TimeUtils$positiveIntegerBelow, max, string);
+		if (_v0.$ === 'Nothing') {
+			return '';
+		} else {
+			var i = _v0.a;
+			return $author$project$TimeUtils$padZero(i);
+		}
+	});
+var $author$project$TimeUtils$textPositiveIntegerBelow = F3(
 	function (max, attrs, current) {
-		var inRange = function (string) {
-			var _v1 = $elm$core$String$toInt(string);
-			if (_v1.$ === 'Just') {
-				var i = _v1.a;
-				return ((i >= 0) && (_Utils_cmp(i, max) < 0)) ? $elm$core$Maybe$Just(i) : current;
-			} else {
-				return $elm$core$Maybe$Nothing;
-			}
-		};
 		return A2(
 			$mdgriffith$elm_ui$Element$Input$text,
 			attrs,
 			{
 				label: $mdgriffith$elm_ui$Element$Input$labelHidden(
 					'Number between 0 and ' + $elm$core$String$fromInt(max)),
-				onChange: inRange,
-				placeholder: $elm$core$Maybe$Nothing,
-				text: function () {
-					if (current.$ === 'Nothing') {
-						return '';
+				onChange: function (_new) {
+					var _v0 = A2($author$project$TimeUtils$positiveIntegerBelow, max, _new);
+					if (_v0.$ === 'Nothing') {
+						return $elm$core$String$isEmpty(_new) ? _new : A2($author$project$TimeUtils$positiveIntegerStringBelow, max, current);
 					} else {
-						var i = current.a;
+						var i = _v0.a;
 						return $author$project$TimeUtils$padZero(i);
 					}
-				}()
+				},
+				placeholder: $elm$core$Maybe$Nothing,
+				text: A2($author$project$TimeUtils$positiveIntegerStringBelow, max, current)
 			});
 	});
-var $mdgriffith$elm_ui$Element$Input$Label = F3(
-	function (a, b, c) {
-		return {$: 'Label', a: a, b: b, c: c};
-	});
-var $mdgriffith$elm_ui$Element$Input$OnLeft = {$: 'OnLeft'};
-var $mdgriffith$elm_ui$Element$Input$labelLeft = $mdgriffith$elm_ui$Element$Input$Label($mdgriffith$elm_ui$Element$Input$OnLeft);
-var $author$project$TestTimer$extraTimeVersion = function (test) {
-	return {
-		lengthInMinutes: $elm$core$Basics$ceiling(test.lengthInMinutes * 1.25),
-		name: test.name + ' (extra time)',
-		startTime: test.startTime,
-		status: $elm$core$Maybe$Nothing
-	};
-};
-var $elm$core$Basics$clamp = F3(
-	function (low, high, number) {
-		return (_Utils_cmp(number, low) < 0) ? low : ((_Utils_cmp(number, high) > 0) ? high : number);
-	});
-var $justinmimbs$date$Date$RD = function (a) {
-	return {$: 'RD', a: a};
-};
-var $justinmimbs$date$Date$isLeapYear = function (y) {
-	return ((!A2($elm$core$Basics$modBy, 4, y)) && (!(!A2($elm$core$Basics$modBy, 100, y)))) || (!A2($elm$core$Basics$modBy, 400, y));
-};
-var $justinmimbs$date$Date$daysBeforeMonth = F2(
-	function (y, m) {
-		var leapDays = $justinmimbs$date$Date$isLeapYear(y) ? 1 : 0;
-		switch (m.$) {
-			case 'Jan':
-				return 0;
-			case 'Feb':
-				return 31;
-			case 'Mar':
-				return 59 + leapDays;
-			case 'Apr':
-				return 90 + leapDays;
-			case 'May':
-				return 120 + leapDays;
-			case 'Jun':
-				return 151 + leapDays;
-			case 'Jul':
-				return 181 + leapDays;
-			case 'Aug':
-				return 212 + leapDays;
-			case 'Sep':
-				return 243 + leapDays;
-			case 'Oct':
-				return 273 + leapDays;
-			case 'Nov':
-				return 304 + leapDays;
-			default:
-				return 334 + leapDays;
-		}
-	});
-var $justinmimbs$date$Date$floorDiv = F2(
-	function (a, b) {
-		return $elm$core$Basics$floor(a / b);
-	});
-var $justinmimbs$date$Date$daysBeforeYear = function (y1) {
-	var y = y1 - 1;
-	var leapYears = (A2($justinmimbs$date$Date$floorDiv, y, 4) - A2($justinmimbs$date$Date$floorDiv, y, 100)) + A2($justinmimbs$date$Date$floorDiv, y, 400);
-	return (365 * y) + leapYears;
-};
-var $justinmimbs$date$Date$daysInMonth = F2(
-	function (y, m) {
-		switch (m.$) {
-			case 'Jan':
-				return 31;
-			case 'Feb':
-				return $justinmimbs$date$Date$isLeapYear(y) ? 29 : 28;
-			case 'Mar':
-				return 31;
-			case 'Apr':
-				return 30;
-			case 'May':
-				return 31;
-			case 'Jun':
-				return 30;
-			case 'Jul':
-				return 31;
-			case 'Aug':
-				return 31;
-			case 'Sep':
-				return 30;
-			case 'Oct':
-				return 31;
-			case 'Nov':
-				return 30;
-			default:
-				return 31;
-		}
-	});
-var $justinmimbs$date$Date$fromCalendarDate = F3(
-	function (y, m, d) {
-		return $justinmimbs$date$Date$RD(
-			($justinmimbs$date$Date$daysBeforeYear(y) + A2($justinmimbs$date$Date$daysBeforeMonth, y, m)) + A3(
-				$elm$core$Basics$clamp,
-				1,
-				A2($justinmimbs$date$Date$daysInMonth, y, m),
-				d));
-	});
-var $justinmimbs$date$Date$toRataDie = function (_v0) {
-	var rd = _v0.a;
-	return rd;
-};
-var $justinmimbs$time_extra$Time$Extra$dateToMillis = function (date) {
-	var daysSinceEpoch = $justinmimbs$date$Date$toRataDie(date) - 719163;
-	return daysSinceEpoch * 86400000;
-};
-var $elm$time$Time$toCivil = function (minutes) {
-	var rawDay = A2($elm$time$Time$flooredDiv, minutes, 60 * 24) + 719468;
-	var era = (((rawDay >= 0) ? rawDay : (rawDay - 146096)) / 146097) | 0;
-	var dayOfEra = rawDay - (era * 146097);
-	var yearOfEra = ((((dayOfEra - ((dayOfEra / 1460) | 0)) + ((dayOfEra / 36524) | 0)) - ((dayOfEra / 146096) | 0)) / 365) | 0;
-	var dayOfYear = dayOfEra - (((365 * yearOfEra) + ((yearOfEra / 4) | 0)) - ((yearOfEra / 100) | 0));
-	var mp = (((5 * dayOfYear) + 2) / 153) | 0;
-	var month = mp + ((mp < 10) ? 3 : (-9));
-	var year = yearOfEra + (era * 400);
-	return {
-		day: (dayOfYear - ((((153 * mp) + 2) / 5) | 0)) + 1,
-		month: month,
-		year: year + ((month <= 2) ? 1 : 0)
-	};
-};
-var $elm$time$Time$toDay = F2(
-	function (zone, time) {
-		return $elm$time$Time$toCivil(
-			A2($elm$time$Time$toAdjustedMinutes, zone, time)).day;
-	});
-var $elm$time$Time$Apr = {$: 'Apr'};
-var $elm$time$Time$Aug = {$: 'Aug'};
-var $elm$time$Time$Dec = {$: 'Dec'};
-var $elm$time$Time$Feb = {$: 'Feb'};
-var $elm$time$Time$Jan = {$: 'Jan'};
-var $elm$time$Time$Jul = {$: 'Jul'};
-var $elm$time$Time$Jun = {$: 'Jun'};
-var $elm$time$Time$Mar = {$: 'Mar'};
-var $elm$time$Time$May = {$: 'May'};
-var $elm$time$Time$Nov = {$: 'Nov'};
-var $elm$time$Time$Oct = {$: 'Oct'};
-var $elm$time$Time$Sep = {$: 'Sep'};
-var $elm$time$Time$toMonth = F2(
-	function (zone, time) {
-		var _v0 = $elm$time$Time$toCivil(
-			A2($elm$time$Time$toAdjustedMinutes, zone, time)).month;
-		switch (_v0) {
-			case 1:
-				return $elm$time$Time$Jan;
-			case 2:
-				return $elm$time$Time$Feb;
-			case 3:
-				return $elm$time$Time$Mar;
-			case 4:
-				return $elm$time$Time$Apr;
-			case 5:
-				return $elm$time$Time$May;
-			case 6:
-				return $elm$time$Time$Jun;
-			case 7:
-				return $elm$time$Time$Jul;
-			case 8:
-				return $elm$time$Time$Aug;
-			case 9:
-				return $elm$time$Time$Sep;
-			case 10:
-				return $elm$time$Time$Oct;
-			case 11:
-				return $elm$time$Time$Nov;
-			default:
-				return $elm$time$Time$Dec;
-		}
-	});
-var $elm$time$Time$toYear = F2(
-	function (zone, time) {
-		return $elm$time$Time$toCivil(
-			A2($elm$time$Time$toAdjustedMinutes, zone, time)).year;
-	});
-var $justinmimbs$date$Date$fromPosix = F2(
-	function (zone, posix) {
-		return A3(
-			$justinmimbs$date$Date$fromCalendarDate,
-			A2($elm$time$Time$toYear, zone, posix),
-			A2($elm$time$Time$toMonth, zone, posix),
-			A2($elm$time$Time$toDay, zone, posix));
-	});
-var $justinmimbs$time_extra$Time$Extra$timeFromClock = F4(
-	function (hour, minute, second, millisecond) {
-		return (((hour * 3600000) + (minute * 60000)) + (second * 1000)) + millisecond;
-	});
-var $elm$time$Time$toMillis = F2(
-	function (_v0, time) {
-		return A2(
-			$elm$core$Basics$modBy,
-			1000,
-			$elm$time$Time$posixToMillis(time));
-	});
-var $justinmimbs$time_extra$Time$Extra$timeFromPosix = F2(
-	function (zone, posix) {
-		return A4(
-			$justinmimbs$time_extra$Time$Extra$timeFromClock,
-			A2($elm$time$Time$toHour, zone, posix),
-			A2($elm$time$Time$toMinute, zone, posix),
-			A2($elm$time$Time$toSecond, zone, posix),
-			A2($elm$time$Time$toMillis, zone, posix));
-	});
-var $justinmimbs$time_extra$Time$Extra$toOffset = F2(
-	function (zone, posix) {
-		var millis = $elm$time$Time$posixToMillis(posix);
-		var localMillis = $justinmimbs$time_extra$Time$Extra$dateToMillis(
-			A2($justinmimbs$date$Date$fromPosix, zone, posix)) + A2($justinmimbs$time_extra$Time$Extra$timeFromPosix, zone, posix);
-		return ((localMillis - millis) / 60000) | 0;
-	});
-var $justinmimbs$time_extra$Time$Extra$posixFromDateTime = F3(
-	function (zone, date, time) {
-		var millis = $justinmimbs$time_extra$Time$Extra$dateToMillis(date) + time;
-		var offset0 = A2(
-			$justinmimbs$time_extra$Time$Extra$toOffset,
-			zone,
-			$elm$time$Time$millisToPosix(millis));
-		var posix1 = $elm$time$Time$millisToPosix(millis - (offset0 * 60000));
-		var offset1 = A2($justinmimbs$time_extra$Time$Extra$toOffset, zone, posix1);
-		if (_Utils_eq(offset0, offset1)) {
-			return posix1;
-		} else {
-			var posix2 = $elm$time$Time$millisToPosix(millis - (offset1 * 60000));
-			var offset2 = A2($justinmimbs$time_extra$Time$Extra$toOffset, zone, posix2);
-			return _Utils_eq(offset1, offset2) ? posix2 : posix1;
-		}
-	});
-var $justinmimbs$time_extra$Time$Extra$partsToPosix = F2(
-	function (zone, _v0) {
-		var year = _v0.year;
-		var month = _v0.month;
-		var day = _v0.day;
-		var hour = _v0.hour;
-		var minute = _v0.minute;
-		var second = _v0.second;
-		var millisecond = _v0.millisecond;
-		return A3(
-			$justinmimbs$time_extra$Time$Extra$posixFromDateTime,
-			zone,
-			A3($justinmimbs$date$Date$fromCalendarDate, year, month, day),
-			A4(
-				$justinmimbs$time_extra$Time$Extra$timeFromClock,
-				A3($elm$core$Basics$clamp, 0, 23, hour),
-				A3($elm$core$Basics$clamp, 0, 59, minute),
-				A3($elm$core$Basics$clamp, 0, 59, second),
-				A3($elm$core$Basics$clamp, 0, 999, millisecond)));
-	});
-var $justinmimbs$time_extra$Time$Extra$posixToParts = F2(
-	function (zone, posix) {
-		return {
-			day: A2($elm$time$Time$toDay, zone, posix),
-			hour: A2($elm$time$Time$toHour, zone, posix),
-			millisecond: A2($elm$time$Time$toMillis, zone, posix),
-			minute: A2($elm$time$Time$toMinute, zone, posix),
-			month: A2($elm$time$Time$toMonth, zone, posix),
-			second: A2($elm$time$Time$toSecond, zone, posix),
-			year: A2($elm$time$Time$toYear, zone, posix)
-		};
-	});
-var $author$project$TestTimer$setTimeToday = F4(
-	function (zone, currentTime, hh, mm) {
-		var parts = A2($justinmimbs$time_extra$Time$Extra$posixToParts, zone, currentTime);
-		var newTime = _Utils_update(
-			parts,
-			{hour: hh, millisecond: 0, minute: mm, second: 0});
-		return A2($justinmimbs$time_extra$Time$Extra$partsToPosix, zone, newTime);
-	});
-var $author$project$TestTimer$makeTests = F2(
-	function (timeData, _v0) {
-		var name = _v0.name;
-		var startHours = _v0.startHours;
-		var startMinutes = _v0.startMinutes;
-		var length = _v0.length;
-		var addExtraTimeToo = _v0.addExtraTimeToo;
-		var _v1 = _Utils_Tuple3(startHours, startMinutes, length);
-		if (((_v1.a.$ === 'Just') && (_v1.b.$ === 'Just')) && (_v1.c.$ === 'Just')) {
-			var h = _v1.a.a;
-			var m = _v1.b.a;
-			var l = _v1.c.a;
-			return (name === '') ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(
-				function () {
-					var test = {
-						lengthInMinutes: l,
-						name: name,
-						startTime: A4($author$project$TestTimer$setTimeToday, timeData.timeZone, timeData.currentTime, h, m),
-						status: $elm$core$Maybe$Nothing
-					};
-					return addExtraTimeToo ? _List_fromArray(
-						[
-							test,
-							$author$project$TestTimer$extraTimeVersion(test)
-						]) : _List_fromArray(
-						[test]);
-				}());
-		} else {
-			return $elm$core$Maybe$Nothing;
-		}
-	});
-var $mdgriffith$elm_ui$Element$map = $mdgriffith$elm_ui$Internal$Model$map;
-var $mdgriffith$elm_ui$Element$Input$Placeholder = F2(
-	function (a, b) {
-		return {$: 'Placeholder', a: a, b: b};
-	});
-var $mdgriffith$elm_ui$Element$Input$placeholder = $mdgriffith$elm_ui$Element$Input$Placeholder;
-var $author$project$Size$placeholderText = function (string) {
-	return (string === '') ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(
-		A2(
-			$mdgriffith$elm_ui$Element$Input$placeholder,
-			_List_Nil,
-			$mdgriffith$elm_ui$Element$text(string)));
-};
 var $author$project$TestTimer$threeDigitWidth = $mdgriffith$elm_ui$Element$width(
 	$mdgriffith$elm_ui$Element$px(75));
 var $author$project$TestTimer$twoDigitWidth = $mdgriffith$elm_ui$Element$width(
@@ -14848,7 +14872,7 @@ var $author$project$TestTimer$viewTestBeingAdded = F2(
 								$mdgriffith$elm_ui$Element$map,
 								A2($elm$core$Basics$composeL, $author$project$TestTimer$NewTest, $author$project$TestTimer$EditedStartHours),
 								A3(
-									$author$project$TimeUtils$inputPositiveIntegerBelow,
+									$author$project$TimeUtils$textPositiveIntegerBelow,
 									24,
 									_List_fromArray(
 										[$author$project$TestTimer$twoDigitWidth]),
@@ -14858,7 +14882,7 @@ var $author$project$TestTimer$viewTestBeingAdded = F2(
 								$mdgriffith$elm_ui$Element$map,
 								A2($elm$core$Basics$composeL, $author$project$TestTimer$NewTest, $author$project$TestTimer$EditedStartMinutes),
 								A3(
-									$author$project$TimeUtils$inputPositiveIntegerBelow,
+									$author$project$TimeUtils$textPositiveIntegerBelow,
 									60,
 									_List_fromArray(
 										[$author$project$TestTimer$twoDigitWidth]),
@@ -14874,7 +14898,7 @@ var $author$project$TestTimer$viewTestBeingAdded = F2(
 								$mdgriffith$elm_ui$Element$map,
 								A2($elm$core$Basics$composeL, $author$project$TestTimer$NewTest, $author$project$TestTimer$EditedLength),
 								A3(
-									$author$project$TimeUtils$inputPositiveIntegerBelow,
+									$author$project$TimeUtils$textPositiveIntegerBelow,
 									24 * 60,
 									_List_fromArray(
 										[$author$project$TestTimer$threeDigitWidth]),
@@ -14890,7 +14914,19 @@ var $author$project$TestTimer$viewTestBeingAdded = F2(
 								$mdgriffith$elm_ui$Element$Input$labelLeft,
 								_List_Nil,
 								$mdgriffith$elm_ui$Element$text('Add a version with extra time?')),
-							onChange: A2($elm$core$Basics$composeL, $author$project$TestTimer$NewTest, $author$project$TestTimer$ToggleExtraTime)
+							onChange: A2($elm$core$Basics$composeL, $author$project$TestTimer$NewTest, $author$project$TestTimer$ToggledExtraTime)
+						}),
+						A2(
+						$mdgriffith$elm_ui$Element$Input$checkbox,
+						_List_Nil,
+						{
+							checked: model.showDigitalToo,
+							icon: $mdgriffith$elm_ui$Element$Input$defaultCheckbox,
+							label: A2(
+								$mdgriffith$elm_ui$Element$Input$labelLeft,
+								_List_Nil,
+								$mdgriffith$elm_ui$Element$text('Show Digital clock too?')),
+							onChange: $author$project$TestTimer$ToggledDigitalView
 						}),
 						A2(
 						$mdgriffith$elm_ui$Element$row,
@@ -15354,6 +15390,22 @@ var $author$project$TestTimer$viewTests = F2(
 			});
 	});
 var $author$project$TestTimer$view = function (model) {
+	var digitalDisplay = model.showDigitalToo ? A2(
+		$mdgriffith$elm_ui$Element$row,
+		_List_fromArray(
+			[
+				$mdgriffith$elm_ui$Element$width(
+				$mdgriffith$elm_ui$Element$px(1100))
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[$author$project$Size$fontSize.enormous, $mdgriffith$elm_ui$Element$centerX]),
+				$mdgriffith$elm_ui$Element$text(
+					A2($author$project$TimeUtils$showTimeWithSeconds, model.timeZone, model.currentTime)))
+			])) : $mdgriffith$elm_ui$Element$none;
 	return A2(
 		$mdgriffith$elm_ui$Element$layout,
 		_List_fromArray(
@@ -15367,22 +15419,7 @@ var $author$project$TestTimer$view = function (model) {
 				[$author$project$Size$spacing.large]),
 			_List_fromArray(
 				[
-					A2(
-					$mdgriffith$elm_ui$Element$row,
-					_List_fromArray(
-						[
-							$mdgriffith$elm_ui$Element$width(
-							$mdgriffith$elm_ui$Element$px(1100))
-						]),
-					_List_fromArray(
-						[
-							A2(
-							$mdgriffith$elm_ui$Element$el,
-							_List_fromArray(
-								[$author$project$Size$fontSize.enormous, $mdgriffith$elm_ui$Element$centerX]),
-							$mdgriffith$elm_ui$Element$text(
-								A2($author$project$TimeUtils$showTimeWithSeconds, model.timeZone, model.currentTime)))
-						])),
+					digitalDisplay,
 					A2(
 					$mdgriffith$elm_ui$Element$row,
 					_List_fromArray(
