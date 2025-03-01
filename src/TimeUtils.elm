@@ -189,6 +189,51 @@ timeZoneOffsetMillis zone =
 -- Integer Input -------------------------------------------------------------------------------------------------------
 
 
+positiveIntegerBelow : Int -> String -> Maybe Int
+positiveIntegerBelow max string =
+    case String.toInt string of
+        Nothing ->
+            Nothing
+
+        Just n ->
+            if 0 <= n && n <= max then
+                Just n
+
+            else
+                Nothing
+
+
+positiveIntegerStringBelow : Int -> String -> String
+positiveIntegerStringBelow max string =
+    case positiveIntegerBelow max string of
+        Nothing ->
+            ""
+
+        Just i ->
+            padZero i
+
+
+textPositiveIntegerBelow : Int -> List (Element.Attribute String) -> String -> Element String
+textPositiveIntegerBelow max attrs current =
+    Element.Input.text attrs
+        { onChange =
+            \new ->
+                case positiveIntegerBelow max new of
+                    Nothing ->
+                        if String.isEmpty new then
+                            new
+
+                        else
+                            positiveIntegerStringBelow max current
+
+                    Just i ->
+                        padZero i
+        , text = positiveIntegerStringBelow max current
+        , placeholder = Nothing
+        , label = Element.Input.labelHidden <| "Number between 0 and " ++ String.fromInt max
+        }
+
+
 inputPositiveIntegerBelow : Int -> List (Element.Attribute (Maybe Int)) -> Maybe Int -> Element (Maybe Int)
 inputPositiveIntegerBelow max attrs current =
     let

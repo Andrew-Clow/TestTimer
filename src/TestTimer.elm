@@ -43,9 +43,9 @@ type Msg
 
 type TestEditing
     = TypedName String
-    | EditedStartHours (Maybe Int)
-    | EditedStartMinutes (Maybe Int)
-    | EditedLength (Maybe Int)
+    | EditedStartHours String
+    | EditedStartMinutes String
+    | EditedLength String
     | ToggleExtraTime Bool
     | SaveTest (Maybe Int) (List Test)
     | CancelNewTest
@@ -90,9 +90,9 @@ type TestStatus
 
 type alias NewTestUnderEditing =
     { name : String
-    , startHours : Maybe Int
-    , startMinutes : Maybe Int
-    , length : Maybe Int
+    , startHours : String
+    , startMinutes : String
+    , length : String
     , addExtraTimeToo : Bool
     , replaces : Maybe Int
     }
@@ -105,9 +105,9 @@ editingTest model index test =
             TimeUtils.posixToHMS model.timeZone test.startTime
     in
     { name = test.name
-    , startHours = Just hms.hours
-    , startMinutes = Just hms.minutes
-    , length = Just test.lengthInMinutes
+    , startHours = hms.hours |> String.fromInt
+    , startMinutes = hms.minutes |> String.fromInt
+    , length = test.lengthInMinutes |> String.fromInt
     , addExtraTimeToo = False
     , replaces = Just index
     }
@@ -120,9 +120,9 @@ duplicateTest model test =
             TimeUtils.posixToHMS model.timeZone <| afterMinutes 1 model
     in
     { name = test.name
-    , startHours = Just hms.hours
-    , startMinutes = Just hms.minutes
-    , length = Just test.lengthInMinutes
+    , startHours = hms.hours |> String.fromInt
+    , startMinutes = hms.minutes |> String.fromInt
+    , length = test.lengthInMinutes |> String.fromInt
     , addExtraTimeToo = False
     , replaces = Nothing
     }
@@ -182,7 +182,7 @@ sortTests =
 
 makeTests : TimeData r -> NewTestUnderEditing -> Maybe (List Test)
 makeTests timeData { name, startHours, startMinutes, length, addExtraTimeToo } =
-    case ( startHours, startMinutes, length ) of
+    case ( startHours |> String.toInt, startMinutes |> String.toInt, length |> String.toInt ) of
         ( Just h, Just m, Just l ) ->
             if name == "" then
                 Nothing
@@ -219,12 +219,12 @@ defaultTest : { r | currentTime : Time.Posix, timeZone : Time.Zone } -> NewTestU
 defaultTest model =
     let
         startTime =
-            afterMinutes 5 model
+            afterMinutes 0 model
     in
-    { name = ""
-    , startHours = Just <| Time.toHour model.timeZone startTime
-    , startMinutes = Just <| Time.toMinute model.timeZone startTime
-    , length = Just 60
+    { name = "Maths"
+    , startHours = Time.toHour model.timeZone startTime |> String.fromInt
+    , startMinutes = Time.toMinute model.timeZone startTime |> String.fromInt
+    , length = "60"
     , addExtraTimeToo = True
     , replaces = Nothing
     }
@@ -586,15 +586,15 @@ viewTestBeingAdded model mn =
                 , Element.row []
                     [ Element.text "Start time: "
                     , Element.map (NewTest << EditedStartHours) <|
-                        TimeUtils.inputPositiveIntegerBelow 24 [ twoDigitWidth ] newTest.startHours
+                        TimeUtils.textPositiveIntegerBelow 24 [ twoDigitWidth ] newTest.startHours
                     , Element.text " : "
                     , Element.map (NewTest << EditedStartMinutes) <|
-                        TimeUtils.inputPositiveIntegerBelow 60 [ twoDigitWidth ] newTest.startMinutes
+                        TimeUtils.textPositiveIntegerBelow 60 [ twoDigitWidth ] newTest.startMinutes
                     ]
                 , Element.row []
                     [ Element.text "Length: "
                     , Element.map (NewTest << EditedLength) <|
-                        TimeUtils.inputPositiveIntegerBelow (24 * 60) [ threeDigitWidth ] newTest.length
+                        TimeUtils.textPositiveIntegerBelow (24 * 60) [ threeDigitWidth ] newTest.length
                     ]
                 , Element.Input.checkbox []
                     { onChange = NewTest << ToggleExtraTime
