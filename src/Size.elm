@@ -67,7 +67,7 @@ padding =
     }
 
 
-fontSize =
+fontSizeOld =
     { normal = Font.size 10
     , large = Font.size 16
     , huge = Font.size 24

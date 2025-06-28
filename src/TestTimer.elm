@@ -5,6 +5,7 @@ import Browser
 import Button exposing (Content(..))
 import Colour
 import Element exposing (Element)
+import Element.Font
 import Element.Input
 import HHMM exposing (HHMM(..))
 import Html exposing (Html)
@@ -37,6 +38,7 @@ type Msg
     | CopyTest Test
     | EditTest Int Test
     | ToggledDigitalView Bool
+    | EditedFontSize String
     | UndoLast
     | RedoLast
     | DeleteTest Int
@@ -64,6 +66,7 @@ type alias Model =
     , tests : UndoList (List Test)
     , newTest : Maybe NewTestUnderEditing
     , showDigitalToo : Bool
+    , fontSize : Int
     }
 
 
@@ -229,6 +232,7 @@ init _ =
             , tests = UndoList.fresh []
             , newTest = Nothing
             , showDigitalToo = False
+            , fontSize = 36
             }
     in
     ( model
@@ -300,6 +304,14 @@ update msg model =
 
                 ToggledDigitalView bool ->
                     { model | showDigitalToo = bool }
+
+                EditedFontSize sizeText ->
+                    case String.toInt sizeText of
+                        Just size ->
+                            { model | fontSize = size }
+
+                        Nothing ->
+                            model
     in
     ( newModel, Cmd.none )
 
@@ -420,7 +432,7 @@ view model =
     let
         digitalDisplay =
             if model.showDigitalToo then
-                Element.el [ Size.fontSize.enormous, Element.centerX ] <|
+                Element.el [ Size.fontSizeOld.enormous, Element.centerX ] <|
                     Element.text <|
                         TimeUtils.showTimeWithSeconds model.timeZone model.currentTime
 
@@ -430,6 +442,7 @@ view model =
     Element.layout
         [ Size.padding.large
         , Element.width Element.fill
+        , Element.Font.size model.fontSize
         ]
     <|
         Element.row [ Element.width Element.fill ]
@@ -445,7 +458,7 @@ view model =
             ]
 
 
-viewTests : { r | timeZone : Time.Zone, newTest : Maybe NewTestUnderEditing, currentTime : Time.Posix } -> List Test -> Element Msg
+viewTests : Model -> List Test -> Element Msg
 viewTests model tests =
     let
         blankIfBeingEdited : Int -> Element msg -> Element msg
@@ -463,7 +476,7 @@ viewTests model tests =
     in
     Element.indexedTable
         [ Size.spacing.large
-        , Size.fontSize.huge
+        , Element.Font.size model.fontSize
         ]
         { data = tests
         , columns =
@@ -539,14 +552,14 @@ deleteButton index _ =
     button Delete SmallRed (Just <| DeleteTest index)
 
 
-twoDigitWidth : Element.Attribute msg
-twoDigitWidth =
-    Element.width <| Element.px 50
+twoDigitWidth : { r | fontSize : Int } -> Element.Attribute msg
+twoDigitWidth model =
+    Element.width <| Element.px <| 2 * model.fontSize + 15
 
 
-threeDigitWidth : Element.Attribute msg
-threeDigitWidth =
-    Element.width <| Element.px 75
+threeDigitWidth : { r | fontSize : Int } -> Element.Attribute msg
+threeDigitWidth model =
+    Element.width <| Element.px <| 3 * model.fontSize + 15
 
 
 ifTrueJust : a -> Bool -> Maybe a
@@ -571,7 +584,7 @@ viewTestBeingAdded model mn =
         Just newTest ->
             Element.column
                 [ Size.spacing.normal ]
-                [ Element.Input.text [ Element.width <| Element.px 300 ]
+                [ Element.Input.text [ Element.width <| Element.px <| 12 * model.fontSize ]
                     { onChange = NewTest << TypedName
                     , text = newTest.name
                     , placeholder = Size.placeholderText "Type a name for the test"
@@ -584,11 +597,11 @@ viewTestBeingAdded model mn =
                         , button Down Small (Just <| NewTest <| EditedStartTime <| HHMM.addString (HHMM -1 0) <| newTest.start)
                         ]
                     , Element.map (NewTest << EditedStartHours) <|
-                        TimeUtils.textPositiveIntegerBelow 24 [ twoDigitWidth ] <|
+                        TimeUtils.textPositiveIntegerBelow 24 [ twoDigitWidth model, Element.Font.center ] <|
                             HHMM.hours newTest.start
                     , Element.text " : "
                     , Element.map (NewTest << EditedStartMinutes) <|
-                        TimeUtils.textPositiveIntegerBelow 60 [ twoDigitWidth ] <|
+                        TimeUtils.textPositiveIntegerBelow 60 [ twoDigitWidth model, Element.Font.center ] <|
                             HHMM.minutes newTest.start
                     , Element.column []
                         [ button Up Small (Just <| NewTest <| EditedStartTime <| HHMM.addString (HHMM 0 1) <| newTest.start)
@@ -598,7 +611,7 @@ viewTestBeingAdded model mn =
                 , Element.row []
                     [ Element.text "Length: "
                     , Element.map (NewTest << EditedLength) <|
-                        TimeUtils.textPositiveIntegerBelow (24 * 60) [ threeDigitWidth ] newTest.length
+                        TimeUtils.textPositiveIntegerBelow (24 * 60) [ threeDigitWidth model, Element.Font.center ] newTest.length
                     , Element.column []
                         [ button Up Small (Just <| NewTest <| EditedLength <| TimeUtils.incButStayBelow (24 * 60) newTest.length)
                         , button Down Small (Just <| NewTest <| EditedLength <| TimeUtils.decButStayPositive newTest.length)
@@ -616,6 +629,16 @@ viewTestBeingAdded model mn =
                     , checked = model.showDigitalToo
                     , label = Element.Input.labelLeft [] <| Element.text "Show Digital clock too?"
                     }
+                , Element.row []
+                    [ Element.text "Font Size: "
+                    , Element.map EditedFontSize <|
+                        TimeUtils.textPositiveIntegerBelow 1000 [ twoDigitWidth model, Element.Font.center ] <|
+                            String.fromInt model.fontSize
+                    , Element.column []
+                        [ button Up Small (Just <| EditedFontSize <| TimeUtils.incButStayBelow 1000 <| String.fromInt model.fontSize)
+                        , button Down Small (Just <| EditedFontSize <| TimeUtils.decButStayPositive <| String.fromInt model.fontSize)
+                        ]
+                    ]
                 , Element.row [ Size.spacing.normal ]
                     [ button Save Text <| Maybe.map (NewTest << SaveTest newTest.replaces) <| makeTests model newTest
                     , button Cancel Text <| Just <| NewTest CancelNewTest

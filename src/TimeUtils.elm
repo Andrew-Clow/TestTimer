@@ -2,6 +2,8 @@ module TimeUtils exposing (..)
 
 import Element exposing (Element)
 import Element.Input
+import Html.Events
+import Json.Decode
 import Time
 
 
@@ -241,9 +243,52 @@ positiveIntegerStringBelow max string =
             padZero i
 
 
+verticalArrowKeys : { up : msg, down : msg } -> Element.Attribute msg
+verticalArrowKeys { up, down } =
+    Element.htmlAttribute
+        (Html.Events.on "keyup"
+            (Json.Decode.field "key" Json.Decode.string
+                |> Json.Decode.andThen
+                    (\key ->
+                        if key == "ArrowUp" then
+                            Json.Decode.succeed up
+
+                        else if key == "ArrowDown" then
+                            Json.Decode.succeed down
+
+                        else
+                            Json.Decode.fail "Not the enter key"
+                    )
+            )
+        )
+
+
 textPositiveIntegerBelow : Int -> List (Element.Attribute String) -> String -> Element String
 textPositiveIntegerBelow max attrs current =
-    Element.Input.text attrs
+    let
+        actualAttrs =
+            case String.toInt current of
+                Nothing ->
+                    attrs
+
+                Just value ->
+                    verticalArrowKeys
+                        { up =
+                            if value + 1 >= max then
+                                "0"
+
+                            else
+                                value + 1 |> String.fromInt
+                        , down =
+                            if value == 0 then
+                                max - 1 |> String.fromInt
+
+                            else
+                                value - 1 |> String.fromInt
+                        }
+                        :: attrs
+    in
+    Element.Input.text actualAttrs
         { onChange =
             \new ->
                 case positiveIntegerBelow max new of
